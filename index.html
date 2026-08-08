@@ -16,6 +16,8 @@
         --approve: #1f7a43;
         --reject: #b23a32;
         --amber: #a9721a;
+        --info: #1f5f8b;
+        --info-soft: #e6eef4;
         --radius: 12px;
         --shadow:
           0 1px 2px rgba(27, 38, 32, 0.04), 0 6px 20px rgba(27, 38, 32, 0.05);
@@ -45,7 +47,6 @@
         letter-spacing: 0.01em;
       }
 
-      /* ---------- Gate ---------- */
       .gate {
         min-height: 100vh;
         display: flex;
@@ -120,7 +121,6 @@
         margin-top: 10px;
       }
 
-      /* ---------- App ---------- */
       .app {
         display: none;
         max-width: 760px;
@@ -134,7 +134,7 @@
         gap: 12px;
         padding: 8px 2px 18px;
         border-bottom: 1px solid var(--line);
-        margin-bottom: 20px;
+        margin-bottom: 8px;
       }
       .bar-title {
         font-size: 19px;
@@ -148,20 +148,6 @@
         font-weight: normal;
         margin-top: 2px;
       }
-      .bar-actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      .count {
-        background: var(--pine-soft);
-        color: var(--pine);
-        font-size: 13px;
-        font-weight: 600;
-        padding: 4px 11px;
-        border-radius: 999px;
-        white-space: nowrap;
-      }
       .btn-ghost {
         background: transparent;
         color: var(--muted);
@@ -174,7 +160,32 @@
         border-color: var(--muted);
       }
 
-      /* Card */
+      .section-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 26px 2px 12px;
+      }
+      .section-head h2 {
+        font-size: 15px;
+        margin: 0;
+        font-weight: 600;
+      }
+      .pill {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 999px;
+      }
+      .pill.amber {
+        background: #f6eedd;
+        color: var(--amber);
+      }
+      .pill.info {
+        background: var(--info-soft);
+        color: var(--info);
+      }
+
       .card {
         background: var(--surface);
         border: 1px solid var(--line);
@@ -183,6 +194,9 @@
         box-shadow: var(--shadow);
         padding: 16px 18px;
         margin-bottom: 14px;
+      }
+      .card.ttd {
+        border-left-color: var(--info);
       }
       .card-top {
         display: flex;
@@ -229,6 +243,7 @@
       .actions {
         display: flex;
         gap: 10px;
+        flex-wrap: wrap;
       }
       .btn-approve {
         background: var(--approve);
@@ -237,6 +252,7 @@
         font-size: 14px;
         font-weight: 500;
         flex: 1;
+        min-width: 130px;
       }
       .btn-reject {
         background: #fff;
@@ -246,6 +262,17 @@
         font-size: 14px;
         font-weight: 500;
         flex: 1;
+        min-width: 90px;
+      }
+      .btn-secondary {
+        background: #fff;
+        color: var(--info);
+        border: 1px solid var(--info);
+        padding: 9px 16px;
+        font-size: 14px;
+        font-weight: 500;
+        flex: 1;
+        min-width: 120px;
       }
       .btn-approve:hover {
         filter: brightness(1.06);
@@ -254,24 +281,28 @@
         background: var(--reject);
         color: #fff;
       }
+      .btn-secondary:hover {
+        background: var(--info);
+        color: #fff;
+      }
       .card.busy {
         opacity: 0.55;
         pointer-events: none;
       }
 
-      /* States */
       .state {
         text-align: center;
         color: var(--muted);
-        padding: 56px 20px;
-        font-size: 15px;
-      }
-      .state.empty {
+        padding: 22px 20px;
+        font-size: 14px;
         border: 1px dashed var(--line);
         border-radius: var(--radius);
       }
+      .state.big {
+        padding: 48px 20px;
+        font-size: 15px;
+      }
 
-      /* Toast */
       #toast {
         position: fixed;
         left: 50%;
@@ -296,7 +327,6 @@
       #toast.err {
         background: var(--reject);
       }
-
       @media (prefers-reduced-motion: reduce) {
         * {
           transition: none !important;
@@ -305,7 +335,6 @@
     </style>
   </head>
   <body>
-    <!-- ============ Gate ============ -->
     <div class="gate" id="gate">
       <div class="gate-card">
         <h1 class="wordmark">Persetujuan Surat Tugas</h1>
@@ -324,19 +353,17 @@
       </div>
     </div>
 
-    <!-- ============ App ============ -->
     <main class="app" id="app">
       <header class="bar">
         <div class="bar-title wordmark">
-          Permintaan Menunggu
-          <small>Tinjau dan putuskan surat tugas yang diajukan</small>
+          Antrean Surat Tugas
+          <small
+            >Tinjau, setujui, dan tandai surat yang sudah ditandatangani</small
+          >
         </div>
-        <div class="bar-actions">
-          <span class="count" id="count">0</span>
-          <button class="btn-ghost" id="refresh">Muat ulang</button>
-        </div>
+        <button class="btn-ghost" id="refresh">Muat ulang</button>
       </header>
-      <div id="list"></div>
+      <div id="body"></div>
     </main>
 
     <div id="toast"></div>
@@ -344,14 +371,15 @@
     <script>
       // ====== KONFIGURASI — ganti dengan alamat n8n Anda ======
       const N8N_BASE = "https://n8n.dewakreatif.com/webhook";
-      const EP_LIST = N8N_BASE + "/surat-pending"; // GET  daftar menunggu
-      const EP_DECISION = N8N_BASE + "/surat-keputusan"; // POST keputusan
-      const AUTO_REFRESH_MS = 30000; // 0 untuk mematikan
+      const EP_LIST = N8N_BASE + "/surat-pending"; // GET  daftar (menunggu + menunggu_ttd)
+      const EP_DECISION = N8N_BASE + "/surat-keputusan"; // POST setujui / tolak
+      const EP_PDF = N8N_BASE + "/surat-pdf"; // GET  URL unduh bertanda-tangan
+      const EP_DONE = N8N_BASE + "/surat-selesai"; // POST tandai sudah ditandatangani
+      const AUTO_REFRESH_MS = 30000;
       // =========================================================
 
       let secret = "";
       let timer = null;
-
       const $ = (id) => document.getElementById(id);
 
       const bulan = [
@@ -368,26 +396,23 @@
         "November",
         "Desember",
       ];
-      function fmtTgl(s) {
+      const fmtTgl = (s) => {
         if (!s) return "-";
         const d = new Date(s);
-        if (isNaN(d)) return s;
-        return d.getDate() + " " + bulan[d.getMonth()] + " " + d.getFullYear();
-      }
-      function rentang(a, b) {
-        if (!b || a === b) return fmtTgl(a);
-        return fmtTgl(a) + " s.d " + fmtTgl(b);
-      }
+        return isNaN(d)
+          ? s
+          : d.getDate() + " " + bulan[d.getMonth()] + " " + d.getFullYear();
+      };
+      const rentang = (a, b) =>
+        !b || a === b ? fmtTgl(a) : fmtTgl(a) + " s.d " + fmtTgl(b);
       function sejak(s) {
         if (!s) return "";
-        const menit = Math.round((Date.now() - new Date(s)) / 60000);
-        if (menit < 1) return "baru saja";
-        if (menit < 60) return menit + " menit lalu";
-        const jam = Math.round(menit / 60);
-        if (jam < 24) return jam + " jam lalu";
-        return Math.round(jam / 24) + " hari lalu";
+        const m = Math.round((Date.now() - new Date(s)) / 60000);
+        if (m < 1) return "baru saja";
+        if (m < 60) return m + " menit lalu";
+        const j = Math.round(m / 60);
+        return j < 24 ? j + " jam lalu" : Math.round(j / 24) + " hari lalu";
       }
-
       function toast(msg, isErr) {
         const t = $("toast");
         t.textContent = msg;
@@ -396,17 +421,14 @@
           t.className = "";
         }, 2600);
       }
-
-      function esc(x) {
-        return String(x ?? "").replace(
+      const esc = (x) =>
+        String(x ?? "").replace(
           /[&<>"]/g,
           (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
         );
-      }
 
       async function muatDaftar() {
-        const list = $("list");
-        list.innerHTML = '<div class="state">Memuat permintaan…</div>';
+        $("body").innerHTML = '<div class="state big">Memuat permintaan…</div>';
         try {
           const res = await fetch(EP_LIST, {
             headers: { "x-dashboard-secret": secret },
@@ -419,29 +441,26 @@
           const data = await res.json();
           render(Array.isArray(data) ? data : data.items || []);
         } catch (e) {
-          list.innerHTML =
-            '<div class="state">Gagal memuat. Periksa koneksi ke server, lalu muat ulang.</div>';
+          $("body").innerHTML =
+            '<div class="state big">Gagal memuat. Periksa koneksi ke server, lalu muat ulang.</div>';
         }
       }
 
-      function render(items) {
-        $("count").textContent = items.length;
-        const list = $("list");
-        if (!items.length) {
-          list.innerHTML =
-            '<div class="state empty">Belum ada permintaan yang menunggu persetujuan.</div>';
-          return;
-        }
-        list.innerHTML = items
-          .map((s) => {
-            const petugas = (s.petugas || [])
-              .map(
-                (p) =>
-                  `<div class="p-row">${esc(p.nama)} <span class="p-jab">— ${esc(p.jabatan || "")}</span></div>`,
-              )
-              .join("");
-            return `
-      <article class="card" data-id="${esc(s.id)}">
+      function kartu(s) {
+        const petugas = (s.petugas || [])
+          .map(
+            (p) =>
+              `<div class="p-row">${esc(p.nama)} <span class="p-jab">— ${esc(p.jabatan || "")}</span></div>`,
+          )
+          .join("");
+        const isTtd = s.status === "menunggu_ttd";
+        const aksi = isTtd
+          ? `<button class="btn-secondary" onclick="unduhPdf(${esc(s.id)}, this)">Unduh PDF</button>
+         <button class="btn-approve" onclick="tandaiSelesai(${esc(s.id)}, this)">Sudah ditandatangani</button>`
+          : `<button class="btn-approve" onclick="putuskan(${esc(s.id)}, 'setujui', this)">Setujui &amp; terbitkan</button>
+         <button class="btn-reject" onclick="putuskan(${esc(s.id)}, 'tolak', this)">Tolak</button>`;
+        return `
+      <article class="card ${isTtd ? "ttd" : ""}" data-id="${esc(s.id)}">
         <div class="card-top">
           <span class="id-chip">#ST-${esc(s.id)}</span>
           <span class="waktu">${esc(sejak(s.created_at))}</span>
@@ -452,18 +471,33 @@
           <dt>Tempat</dt><dd>${esc(s.tempat)}</dd>
           <dt>Tanggal</dt><dd>${esc(rentang(s.tanggal_mulai, s.tanggal_selesai))}</dd>
         </dl>
-        <div class="actions">
-          <button class="btn-approve" onclick="putuskan(${esc(s.id)}, 'setujui', this)">Setujui &amp; terbitkan</button>
-          <button class="btn-reject" onclick="putuskan(${esc(s.id)}, 'tolak', this)">Tolak</button>
-        </div>
+        <div class="actions">${aksi}</div>
       </article>`;
-          })
-          .join("");
+      }
+
+      function render(items) {
+        const menunggu = items.filter((s) => s.status === "menunggu");
+        const ttd = items.filter((s) => s.status === "menunggu_ttd");
+
+        if (!items.length) {
+          $("body").innerHTML =
+            '<div class="state big">Belum ada permintaan yang perlu diproses.</div>';
+          return;
+        }
+        $("body").innerHTML = `
+      <div class="section-head">
+        <h2>Menunggu Persetujuan</h2><span class="pill amber">${menunggu.length}</span>
+      </div>
+      ${menunggu.length ? menunggu.map(kartu).join("") : '<div class="state">Tidak ada permintaan baru.</div>'}
+      <div class="section-head">
+        <h2>Menunggu Tanda Tangan Kepsek</h2><span class="pill info">${ttd.length}</span>
+      </div>
+      ${ttd.length ? ttd.map(kartu).join("") : '<div class="state">Tidak ada surat menunggu tanda tangan.</div>'}
+    `;
       }
 
       async function putuskan(id, aksi, btn) {
-        const card = btn.closest(".card");
-        card.classList.add("busy");
+        btn.closest(".card").classList.add("busy");
         try {
           const res = await fetch(EP_DECISION, {
             method: "POST",
@@ -478,20 +512,63 @@
             return;
           }
           if (!res.ok) throw new Error("HTTP " + res.status);
-          card.style.height = card.offsetHeight + "px";
-          requestAnimationFrame(() => {
-            card.remove();
-          });
-          $("count").textContent = document.querySelectorAll(".card").length;
-          if (!document.querySelectorAll(".card").length) render([]);
           toast(
             aksi === "setujui"
               ? "Disetujui — surat sedang diterbitkan"
               : "Ditolak",
           );
+          muatDaftar();
         } catch (e) {
-          card.classList.remove("busy");
+          btn.closest(".card").classList.remove("busy");
           toast("Gagal memproses. Coba lagi.", true);
+        }
+      }
+
+      async function tandaiSelesai(id, btn) {
+        btn.closest(".card").classList.add("busy");
+        try {
+          const res = await fetch(EP_DONE, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-dashboard-secret": secret,
+            },
+            body: JSON.stringify({ id }),
+          });
+          if (res.status === 401) {
+            kunciUlang("Kode akses salah.");
+            return;
+          }
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          toast("Ditandai selesai — pemohon diberi tahu");
+          muatDaftar();
+        } catch (e) {
+          btn.closest(".card").classList.remove("busy");
+          toast("Gagal memproses. Coba lagi.", true);
+        }
+      }
+
+      async function unduhPdf(id, btn) {
+        const label = btn.textContent;
+        btn.textContent = "Menyiapkan…";
+        btn.disabled = true;
+        try {
+          const res = await fetch(EP_PDF + "?id=" + id, {
+            headers: { "x-dashboard-secret": secret },
+          });
+          if (res.status === 401) {
+            kunciUlang("Kode akses salah.");
+            return;
+          }
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const data = await res.json();
+          if (data.url) window.open(data.url, "_blank");
+          else toast("URL tidak tersedia.", true);
+        } catch (e) {
+          toast("Gagal menyiapkan PDF.", true);
+        } finally {
+          btn.textContent = label;
+          btn.disabled = false;
         }
       }
 
