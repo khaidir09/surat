@@ -553,9 +553,10 @@
         btn.textContent = "Menyiapkan…";
         btn.disabled = true;
         try {
-          const res = await fetch(EP_PDF + "?id=" + id, {
-            headers: { "x-dashboard-secret": secret },
-          });
+          const res = await fetch(
+            EP_PDF + "?id=" + id + "&token=" + encodeURIComponent(secret),
+            {},
+          );
           if (res.status === 401) {
             kunciUlang("Kode akses salah.");
             return;
