@@ -497,6 +497,18 @@
       }
 
       async function putuskan(id, aksi, btn) {
+        let nomor = null;
+        if (aksi === "setujui") {
+          nomor = prompt(
+            "Masukkan nomor urut surat (angka saja, sesuai buku agenda):",
+          );
+          if (nomor === null) return;
+          nomor = nomor.trim();
+          if (!/^\d+$/.test(nomor)) {
+            toast("Nomor urut harus berupa angka.", true);
+            return;
+          }
+        }
         btn.closest(".card").classList.add("busy");
         try {
           const res = await fetch(EP_DECISION, {
@@ -505,7 +517,7 @@
               "Content-Type": "application/json",
               "x-dashboard-secret": secret,
             },
-            body: JSON.stringify({ id, aksi }),
+            body: JSON.stringify({ id, aksi, nomor }),
           });
           if (res.status === 401) {
             kunciUlang("Kode akses salah.");
