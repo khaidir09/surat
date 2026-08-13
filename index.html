@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Persetujuan Surat Tugas — TAS</title>
+    <title>Persetujuan Surat — TAS</title>
     <style>
       :root {
         --bg: #f4f6f3;
@@ -17,7 +17,7 @@
         --reject: #b23a32;
         --amber: #a9721a;
         --info: #1f5f8b;
-        --info-soft: #e6eef4;
+        --ket: #6d3b8e;
         --radius: 12px;
         --shadow:
           0 1px 2px rgba(27, 38, 32, 0.04), 0 6px 20px rgba(27, 38, 32, 0.05);
@@ -182,8 +182,12 @@
         color: var(--amber);
       }
       .pill.info {
-        background: var(--info-soft);
+        background: #e6eef4;
         color: var(--info);
+      }
+      .pill.ket {
+        background: #efe6f4;
+        color: var(--ket);
       }
 
       .card {
@@ -197,6 +201,9 @@
       }
       .card.ttd {
         border-left-color: var(--info);
+      }
+      .card.ket {
+        border-left-color: var(--ket);
       }
       .card-top {
         display: flex;
@@ -226,6 +233,11 @@
         font-size: 13px;
         color: var(--muted);
         font-weight: normal;
+      }
+      .siswa-nama {
+        font-size: 15px;
+        font-weight: 500;
+        margin-bottom: 8px;
       }
       dl.meta {
         display: grid;
@@ -337,7 +349,7 @@
   <body>
     <div class="gate" id="gate">
       <div class="gate-card">
-        <h1 class="wordmark">Persetujuan Surat Tugas</h1>
+        <h1 class="wordmark">Persetujuan Surat</h1>
         <p>Tata Administrasi Sekolah</p>
         <div class="field">
           <label for="pass">Kode akses</label>
@@ -356,9 +368,10 @@
     <main class="app" id="app">
       <header class="bar">
         <div class="bar-title wordmark">
-          Antrean Surat Tugas
+          Antrean Surat
           <small
-            >Tinjau, setujui, dan tandai surat yang sudah ditandatangani</small
+            >Tinjau dan proses permintaan surat tugas &amp; keterangan
+            aktif</small
           >
         </div>
         <button class="btn-ghost" id="refresh">Muat ulang</button>
@@ -369,19 +382,18 @@
     <div id="toast"></div>
 
     <script>
-      // ====== KONFIGURASI — ganti dengan alamat n8n Anda ======
+      // ====== KONFIGURASI ======
       const N8N_BASE = "https://n8n.dewakreatif.com/webhook";
-      const EP_LIST = N8N_BASE + "/surat-pending"; // GET  daftar (menunggu + menunggu_ttd)
-      const EP_DECISION = N8N_BASE + "/surat-keputusan"; // POST setujui / tolak
-      const EP_PDF = N8N_BASE + "/surat-pdf"; // GET  URL unduh bertanda-tangan
-      const EP_DONE = N8N_BASE + "/surat-selesai"; // POST tandai sudah ditandatangani
+      const EP_LIST = N8N_BASE + "/surat-pending";
+      const EP_DECISION = N8N_BASE + "/surat-keputusan";
+      const EP_PDF = N8N_BASE + "/surat-pdf";
+      const EP_DONE = N8N_BASE + "/surat-selesai";
       const AUTO_REFRESH_MS = 30000;
-      // =========================================================
+      // =========================
 
-      let secret = "";
-      let timer = null;
+      let secret = "",
+        timer = null;
       const $ = (id) => document.getElementById(id);
-
       const bulan = [
         "Januari",
         "Februari",
@@ -442,61 +454,89 @@
           render(Array.isArray(data) ? data : data.items || []);
         } catch (e) {
           $("body").innerHTML =
-            '<div class="state big">Gagal memuat. Periksa koneksi ke server, lalu muat ulang.</div>';
+            '<div class="state big">Gagal memuat. Periksa koneksi, lalu muat ulang.</div>';
         }
       }
 
-      function kartu(s) {
+      function kartuTugas(s) {
         const petugas = (s.petugas || [])
           .map(
             (p) =>
               `<div class="p-row">${esc(p.nama)} <span class="p-jab">— ${esc(p.jabatan || "")}</span></div>`,
           )
           .join("");
-        const isTtd = s.status === "menunggu_ttd";
-        const aksi = isTtd
+        const ttd = s.status === "menunggu_ttd";
+        const aksi = ttd
           ? `<button class="btn-secondary" onclick="unduhPdf(${esc(s.id)}, this)">Unduh PDF</button>
          <button class="btn-approve" onclick="tandaiSelesai(${esc(s.id)}, this)">Sudah ditandatangani</button>`
-          : `<button class="btn-approve" onclick="putuskan(${esc(s.id)}, 'setujui', this)">Setujui &amp; terbitkan</button>
-         <button class="btn-reject" onclick="putuskan(${esc(s.id)}, 'tolak', this)">Tolak</button>`;
-        return `
-      <article class="card ${isTtd ? "ttd" : ""}" data-id="${esc(s.id)}">
-        <div class="card-top">
-          <span class="id-chip">#ST-${esc(s.id)}</span>
-          <span class="waktu">${esc(sejak(s.created_at))}</span>
-        </div>
-        <div class="petugas">${petugas}</div>
-        <dl class="meta">
-          <dt>Kegiatan</dt><dd>${esc(s.kegiatan)}</dd>
-          <dt>Tempat</dt><dd>${esc(s.tempat)}</dd>
-          <dt>Tanggal</dt><dd>${esc(rentang(s.tanggal_mulai, s.tanggal_selesai))}</dd>
-        </dl>
-        <div class="actions">${aksi}</div>
-      </article>`;
+          : `<button class="btn-approve" onclick="putuskan(${esc(s.id)}, 'surat_tugas', 'setujui', this)">Setujui &amp; terbitkan</button>
+         <button class="btn-reject" onclick="putuskan(${esc(s.id)}, 'surat_tugas', 'tolak', this)">Tolak</button>`;
+        return `<article class="card ${ttd ? "ttd" : ""}" data-id="${esc(s.id)}">
+      <div class="card-top"><span class="id-chip">#ST-${esc(s.id)}</span><span class="waktu">${esc(sejak(s.created_at))}</span></div>
+      <div class="petugas">${petugas}</div>
+      <dl class="meta">
+        <dt>Kegiatan</dt><dd>${esc(s.kegiatan)}</dd>
+        <dt>Tempat</dt><dd>${esc(s.tempat)}</dd>
+        <dt>Tanggal</dt><dd>${esc(rentang(s.tanggal_mulai, s.tanggal_selesai))}</dd>
+      </dl>
+      <div class="actions">${aksi}</div></article>`;
+      }
+
+      function kartuKeterangan(s) {
+        return `<article class="card ket" data-id="${esc(s.id)}">
+      <div class="card-top"><span class="id-chip">#SK-${esc(s.id)}</span><span class="waktu">${esc(sejak(s.created_at))}</span></div>
+      <div class="siswa-nama">${esc(s.nama_siswa)}</div>
+      <dl class="meta">
+        <dt>Kelas</dt><dd>${esc(s.kelas_jurusan)}</dd>
+        <dt>Keperluan</dt><dd>${esc(s.keperluan || "-")}</dd>
+      </dl>
+      <div class="actions">
+        <button class="btn-approve" onclick="putuskan(${esc(s.id)}, 'keterangan_aktif', 'setujui', this)">Setujui &amp; terbitkan</button>
+        <button class="btn-reject" onclick="putuskan(${esc(s.id)}, 'keterangan_aktif', 'tolak', this)">Tolak</button>
+      </div></article>`;
+      }
+
+      function seksi(judul, pillClass, arr, render) {
+        return (
+          `<div class="section-head"><h2>${judul}</h2><span class="pill ${pillClass}">${arr.length}</span></div>` +
+          (arr.length
+            ? arr.map(render).join("")
+            : '<div class="state">Tidak ada.</div>')
+        );
       }
 
       function render(items) {
-        const menunggu = items.filter((s) => s.status === "menunggu");
-        const ttd = items.filter((s) => s.status === "menunggu_ttd");
-
+        const tMenunggu = items.filter(
+          (s) => s.jenis === "surat_tugas" && s.status === "menunggu",
+        );
+        const tTtd = items.filter(
+          (s) => s.jenis === "surat_tugas" && s.status === "menunggu_ttd",
+        );
+        const kMenunggu = items.filter(
+          (s) => s.jenis === "keterangan_aktif" && s.status === "menunggu",
+        );
         if (!items.length) {
           $("body").innerHTML =
             '<div class="state big">Belum ada permintaan yang perlu diproses.</div>';
           return;
         }
-        $("body").innerHTML = `
-      <div class="section-head">
-        <h2>Menunggu Persetujuan</h2><span class="pill amber">${menunggu.length}</span>
-      </div>
-      ${menunggu.length ? menunggu.map(kartu).join("") : '<div class="state">Tidak ada permintaan baru.</div>'}
-      <div class="section-head">
-        <h2>Menunggu Tanda Tangan Kepsek</h2><span class="pill info">${ttd.length}</span>
-      </div>
-      ${ttd.length ? ttd.map(kartu).join("") : '<div class="state">Tidak ada surat menunggu tanda tangan.</div>'}
-    `;
+        $("body").innerHTML =
+          seksi(
+            "Surat Tugas — Menunggu Persetujuan",
+            "amber",
+            tMenunggu,
+            kartuTugas,
+          ) +
+          seksi("Surat Tugas — Menunggu TTD Kepsek", "info", tTtd, kartuTugas) +
+          seksi(
+            "Surat Keterangan — Menunggu Persetujuan",
+            "ket",
+            kMenunggu,
+            kartuKeterangan,
+          );
       }
 
-      async function putuskan(id, aksi, btn) {
+      async function putuskan(id, jenis, aksi, btn) {
         let nomor = null;
         if (aksi === "setujui") {
           nomor = prompt(
@@ -517,7 +557,7 @@
               "Content-Type": "application/json",
               "x-dashboard-secret": secret,
             },
-            body: JSON.stringify({ id, aksi, nomor }),
+            body: JSON.stringify({ id, jenis, aksi, nomor }),
           });
           if (res.status === 401) {
             kunciUlang("Kode akses salah.");
@@ -574,7 +614,8 @@
           }
           if (!res.ok) throw new Error("HTTP " + res.status);
           const data = await res.json();
-          if (data.url) window.open(data.url, "_blank");
+          const item = Array.isArray(data) ? data[0] : data;
+          if (item && item.url) window.open(item.url, "_blank");
           else toast("URL tidak tersedia.", true);
         } catch (e) {
           toast("Gagal menyiapkan PDF.", true);
@@ -598,7 +639,6 @@
         $("gate").style.display = "flex";
         $("gateError").textContent = pesan || "";
       }
-
       $("unlock").onclick = () => {
         const v = $("pass").value.trim();
         if (!v) {
