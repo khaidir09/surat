@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: "Times New Roman", Times, serif; font-size: 12pt; color: #000; margin: 0; line-height: 1.4; }
+  .kop { width: 100%; border-collapse: collapse; }
+  .kop td { vertical-align: middle; }
+  .kop .logo-cell { width: 90px; text-align: center; }
+  .kop .logo-cell img { width: 80px; height: 80px; }
+  .kop .teks { text-align: center; line-height: 1.25; }
+  .kop .baris1 { font-size: 13pt; font-weight: bold; }
+  .kop .baris2 { font-size: 14pt; font-weight: bold; }
+  .kop .baris3 { font-size: 20pt; font-weight: bold; letter-spacing: 0.5px; }
+  .kop .alamat { font-size: 10.5pt; }
+  .garis { border: none; border-top: 3px solid #000; margin: 3px 0 2px; }
+  .garis-tipis { border: none; border-top: 1px solid #000; margin: 0 0 16px; }
+
+  .judul { text-align: center; margin-bottom: 16px; }
+  .judul .t { font-size: 13pt; font-weight: bold; text-decoration: underline; }
+  .judul .nomor { font-size: 12pt; }
+
+  p.par { text-align: justify; margin: 0 0 8px; }
+
+  .blok { margin: 6px 0 10px; }
+  .baris { display: grid; grid-template-columns: 200px 1fr; font-size: 12pt; padding: 1px 0; }
+  .baris .lbl {}
+  .baris .val {}
+  .val b { font-weight: bold; }
+
+  .ttd { width: 50%; margin-left: 50%; margin-top: 14px; }
+  .ttd .spasi-ttd { height: 64px; }
+  .ttd .nama-kepala { font-weight: bold; text-decoration: underline; }
+</style>
+</head>
+<body>
+
+  <table class="kop">
+    <tr>
+      <td class="logo-cell"><img src="logo_provinsi.png" alt="Logo Provinsi"></td>
+      <td class="teks">
+        <div class="baris1">PEMERINTAH PROVINSI KALIMANTAN SELATAN</div>
+        <div class="baris2">DINAS PENDIDIKAN DAN KEBUDAYAAN</div>
+        <div class="baris3">{{nama_sekolah}}</div>
+        <div class="alamat">{{alamat_sekolah}}</div>
+        <div class="alamat">E-mail : {{email_sekolah}}</div>
+      </td>
+      <td class="logo-cell"><img src="logo_sekolah.png" alt="Logo Sekolah"></td>
+    </tr>
+  </table>
+  <hr class="garis">
+  <hr class="garis-tipis">
+
+  <div class="judul">
+    <div class="t">SURAT KETERANGAN</div>
+    <div class="nomor">Nomor : {{no_surat}}</div>
+  </div>
+
+  <p class="par">Yang bertanda tangan di bawah ini {{jabatan_pemberi}} {{wilayah_sekolah}} :</p>
+
+  <div class="blok">
+    <div class="baris"><span class="lbl">Nama</span><span class="val">: <b>{{nama_kepala}}</b></span></div>
+    <div class="baris"><span class="lbl">NIP</span><span class="val">: {{nip_kepala}}</span></div>
+    <div class="baris"><span class="lbl">Pangkat/Golongan</span><span class="val">: {{pangkat_kepala}}</span></div>
+    <div class="baris"><span class="lbl">Jabatan</span><span class="val">: {{jabatan_kepala}}</span></div>
+    <div class="baris"><span class="lbl">Unit Kerja</span><span class="val">: {{unit_kerja}}</span></div>
+  </div>
+
+  <p class="par">Dengan ini menerangkan bahwa :</p>
+
+  <div class="blok">
+    <div class="baris"><span class="lbl">Nama</span><span class="val">: <b>{{nama_siswa}}</b></span></div>
+    <div class="baris"><span class="lbl">Tempat/Tanggal Lahir</span><span class="val">: {{tempat_tanggal_lahir}}</span></div>
+    <div class="baris"><span class="lbl">Kelas/Jurusan</span><span class="val">: {{kelas_jurusan}}</span></div>
+    <div class="baris"><span class="lbl">NIS/NISN</span><span class="val">: {{nis_nisn}}</span></div>
+    <div class="baris"><span class="lbl">NPSN</span><span class="val">: {{npsn}}</span></div>
+    <div class="baris"><span class="lbl">Nama Orang Tua</span><span class="val">: {{nama_orang_tua}}</span></div>
+    <div class="baris"><span class="lbl">Alamat</span><span class="val">: {{alamat}}</span></div>
+  </div>
+
+  <p class="par">Adalah benar murid kelas {{kelas}} di {{nama_sekolah_kalimat}} tahun Pelajaran {{tahun_pelajaran}} dan masih aktif sampai sekarang.</p>
+
+  <p class="par">Demikian Surat Keterangan ini dibuat dengan sebenar-benarnya untuk dapat dipergunakan sebagaimana mestinya.</p>
+
+  <div class="ttd">
+    <div>{{kota_surat}}, {{tanggal_surat}}</div>
+    <div>Kepala {{nama_sekolah_singkat}},</div>
+    <div class="spasi-ttd"></div>
+    <div class="nama-kepala">{{nama_kepala}}</div>
+    <div>{{pangkat_singkat}}</div>
+    <div>NIP. {{nip_kepala}}</div>
+  </div>
+
+</body>
+</html>
