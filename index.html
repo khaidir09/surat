@@ -376,6 +376,71 @@
         </div>
         <button class="btn-ghost" id="refresh">Muat ulang</button>
       </header>
+      <div
+        id="panel-kepsek"
+        style="
+          background: var(--surface);
+          border: 1px solid var(--line);
+          border-left: 4px solid var(--pine);
+          border-radius: 12px;
+          padding: 14px 16px;
+          margin-bottom: 18px;
+        "
+      >
+        <div style="font-weight: 600; font-size: 14px; margin-bottom: 10px">
+          Status Kepala Sekolah
+        </div>
+        <div
+          style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"
+        >
+          <select
+            id="kStatus"
+            style="
+              padding: 8px 10px;
+              border: 1px solid var(--line);
+              border-radius: 8px;
+              font: inherit;
+            "
+          >
+            <option>Di sekolah</option>
+            <option>Dinas Luar</option>
+            <option>Rapat</option>
+            <option>Tidak di tempat</option>
+            <option>Cuti</option>
+          </select>
+          <input
+            id="kEstimasi"
+            placeholder="Kembali pukul (opsional)"
+            style="
+              padding: 8px 10px;
+              border: 1px solid var(--line);
+              border-radius: 8px;
+              font: inherit;
+              flex: 1;
+              min-width: 150px;
+            "
+          />
+          <input
+            id="kKeterangan"
+            placeholder="Keterangan (opsional)"
+            style="
+              padding: 8px 10px;
+              border: 1px solid var(--line);
+              border-radius: 8px;
+              font: inherit;
+              flex: 2;
+              min-width: 150px;
+            "
+          />
+          <button
+            class="btn-approve"
+            style="flex: 0 0 auto; min-width: auto"
+            onclick="simpanStatusKepsek(this)"
+          >
+            Simpan
+          </button>
+        </div>
+      </div>
       <div id="body"></div>
     </main>
 
@@ -653,6 +718,31 @@
         if (e.key === "Enter") $("unlock").click();
       });
       $("refresh").onclick = muatDaftar;
+
+      const EP_STATUS = N8N_BASE + "/status-kepsek";
+      async function simpanStatusKepsek(btn) {
+        btn.disabled = true;
+        try {
+          const res = await fetch(EP_STATUS, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-dashboard-secret": secret,
+            },
+            body: JSON.stringify({
+              status: document.getElementById("kStatus").value,
+              estimasi: document.getElementById("kEstimasi").value.trim(),
+              keterangan: document.getElementById("kKeterangan").value.trim(),
+            }),
+          });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          toast("Status kepsek diperbarui");
+        } catch (e) {
+          toast("Gagal menyimpan status.", true);
+        } finally {
+          btn.disabled = false;
+        }
+      }
     </script>
   </body>
 </html>
