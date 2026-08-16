@@ -47,6 +47,14 @@ class SuratTugas extends Model
             'surat_tugas_petugas',
             'surat_tugas_id',
             'pegawai_id'
-        )->orderBy('surat_tugas_petugas.pegawai_id');
+        )
+            // Tanpa withTrashed(), menghapus seorang pegawai akan menghilangkan
+            // namanya dari surat tugas yang sudah pernah terbit (E7) — surat
+            // yang tercetak tidak boleh berubah isinya karena data master
+            // berubah setelahnya.
+            ->withTrashed()
+            ->withPivot('urutan')
+            ->orderByRaw('surat_tugas_petugas.urutan asc nulls last')
+            ->orderBy('surat_tugas_petugas.pegawai_id');
     }
 }

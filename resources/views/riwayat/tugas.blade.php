@@ -41,13 +41,18 @@
                             @if (filled($orang->jabatan))
                                 <span class="text-redup">, {{ $orang->jabatan }}</span>
                             @endif
+                            @if ($orang->trashed())
+                                <span class="ms-1 rounded-full bg-latar px-2 py-0.5 text-xs text-redup">nonaktif</span>
+                            @endif
                         </li>
                     @endforeach
                 </ol>
-                <p class="mt-2 text-xs text-redup">
-                    Urutan mengikuti nomor pegawai, bukan urutan pada surat: tabel
-                    penghubung di n8n belum menyimpan urutan.
-                </p>
+                @if ($surat->petugas->every(fn ($p) => is_null($p->pivot->urutan)))
+                    <p class="mt-2 text-xs text-redup">
+                        Urutan mengikuti nomor pegawai, bukan urutan pada surat:
+                        surat ini dibuat n8n, yang belum mengisi kolom urutan.
+                    </p>
+                @endif
             @endif
         </x-baris>
 

@@ -1,6 +1,6 @@
 # Spesifikasi: Dashboard Laravel untuk Sistem Surat SMKN 1 Amuntai
 
-**Status:** Dalam pengerjaan — §17 langkah 1–3 selesai, lanjut ke langkah 4 (CRUD data master). §14.2, §14.3, §14.6, §14.8 terjawab; §14.1 terjawab sebagian (nilai penolakan belum diketahui, ditangani lewat K12); §14.4, §14.5 relevan saat menulis migration
+**Status:** Dalam pengerjaan — §17 langkah 1–4 selesai, lanjut ke langkah 5 (`N8nClient` + status kepsek). §14.2, §14.3, §14.6, §14.8 terjawab; §14.1 terjawab sebagian (nilai penolakan belum diketahui, ditangani lewat K12); §14.4, §14.5 relevan saat menulis migration
 **Tanggal:** 15 Agustus 2026, diperbarui 16 Agustus 2026
 **Penulis:** Hasil wawancara kebutuhan dengan Muhammad Khaidir
 
@@ -557,7 +557,7 @@ Database pengujian: Postgres lokal terpisah, **bukan** Supabase produksi. Ini me
 1. ~~`.gitignore`, `composer create-project`, koneksi ke Supabase, schema `app`~~ — **selesai.** Laravel 12.66.0, Postgres 17.6 lewat Session pooler `aws-0-ap-northeast-1.pooler.supabase.com:5432` (Direct connection tidak dipakai: hostnya IPv6-only dan tidak terjangkau dari jaringan sekolah). Migration bawaan Laravel mendarat di schema `app` (9 tabel), `public` tetap 10 tabel milik n8n — K4 terbukti berjalan. Sisa tindakan manual: mengarahkan vhost Laragon ke `public/`
 2. ~~Auth + role + halaman kelola pengguna (AC-1)~~ — **selesai.** Kerangka route §7 ikut didaftarkan seluruhnya agar matriks role dapat diuji sekarang; yang belum dikerjakan diarahkan ke `BelumTersediaController`. Tambahan di luar spesifikasi: akun TAS aktif terakhir tidak boleh dinonaktifkan atau diturunkan rolenya, karena tanpa itu sistem terkunci permanen. Sisa tindakan manual: `php artisan db:seed` untuk membuat akun TAS pertama
 3. ~~Model read-only surat + halaman riwayat (AC-3)~~ — **selesai.** Daftar digabung lewat `union all` di SQL agar paginasi dihitung dari kedua tabel sekaligus (E17). Model surat memakai trait `HanyaBaca` yang melempar pengecualian pada setiap penulisan, bukan sekadar `$guarded` — `$guarded` hanya menahan mass assignment. Migration khusus pengujian yang membangun tabel n8n ada di `database/migrations/uji/`, hanya dimuat saat `APP_ENV=testing`. **Temuan:** `no_surat` produksi berbentuk `800.1.11.1/67-SMKN.1-AT/2026`; staf hanya mengetik angka urutnya dan n8n merangkai sisanya — menegaskan validasi digit-only pada E4 sekaligus keharusan pencarian secara sebagian
-4. CRUD data master (AC-4) — tulisan pertama Laravel ke schema `public`
+4. ~~CRUD data master (AC-4)~~ — **selesai.** Migration §5.3 sudah dijalankan di produksi; 615 siswa, 79 pegawai, 32 agenda, dan 3 surat terverifikasi utuh sesudahnya. `app.aktivitas` berdiri di schema `app`. **Koreksi terhadap §5.3:** `agenda.created_at` dibuat **tanpa** `default now()` — `add column ... default` mengisi seluruh baris lama dengan waktu migrasi berjalan, sehingga 32 kegiatan lama akan mengaku dibuat pada detik itu; NULL jujur berarti "tidak diketahui". **Belum termasuk:** impor CSV yang disebut §7 (tidak ada di AC-4)
 5. `N8nClient` + status kepsek (AC-5, AC-6) — integrasi paling sederhana sebagai uji coba
 6. Antrean persetujuan (AC-2) — paling berisiko, dikerjakan terakhir setelah pola mapan
 7. Verifikasi V-1 sampai V-5, lalu pensiunkan `index.html` dan `index copy.html`

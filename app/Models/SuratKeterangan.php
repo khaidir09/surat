@@ -33,9 +33,12 @@ class SuratKeterangan extends Model
     /**
      * siswa_id nullable dan tanpa foreign key, jadi relasi ini bisa kosong
      * maupun menunjuk baris yang sudah tidak ada (E9).
+     *
+     * withTrashed() wajib: menghapus siswa tidak boleh membuat surat yang
+     * pernah terbit kehilangan nama pemiliknya (E7, E8).
      */
     public function siswa(): BelongsTo
     {
-        return $this->belongsTo(Siswa::class);
+        return $this->belongsTo(Siswa::class)->withTrashed();
     }
 }

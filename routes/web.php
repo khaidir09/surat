@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BelumTersediaController;
+use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\RiwayatController;
+use App\Http\Controllers\SiswaController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -57,24 +60,14 @@ Route::middleware(['auth', 'aktif'])->group(function () use ($belum, $jenis) {
     Route::get('/riwayat/{jenis}/{id}', [RiwayatController::class, 'show'])
         ->whereIn('jenis', $jenis)->whereNumber('id')->name('riwayat.show');
 
-    // --- Data master (langkah 4) ----------------------------------------------
-    Route::get('/agenda', $belum)->name('agenda.index');
+    // --- Data master (langkah 4, selesai) -------------------------------------
+    // Kepsek boleh melihat agenda, tidak boleh mengubahnya (§6).
+    Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
 
-    Route::middleware('role:tas')->group(function () use ($belum) {
-        Route::get('/agenda/create', $belum)->name('agenda.create');
-        Route::post('/agenda', $belum)->name('agenda.store');
-        Route::get('/agenda/{agenda}/edit', $belum)->name('agenda.edit');
-        Route::put('/agenda/{agenda}', $belum)->name('agenda.update');
-        Route::delete('/agenda/{agenda}', $belum)->name('agenda.destroy');
-
-        foreach (['pegawai', 'siswa'] as $sumber) {
-            Route::get("/$sumber", $belum)->name("$sumber.index");
-            Route::get("/$sumber/create", $belum)->name("$sumber.create");
-            Route::post("/$sumber", $belum)->name("$sumber.store");
-            Route::get("/$sumber/{id}/edit", $belum)->whereNumber('id')->name("$sumber.edit");
-            Route::put("/$sumber/{id}", $belum)->whereNumber('id')->name("$sumber.update");
-            Route::delete("/$sumber/{id}", $belum)->whereNumber('id')->name("$sumber.destroy");
-        }
+    Route::middleware('role:tas')->group(function () {
+        Route::resource('agenda', AgendaController::class)->except(['index', 'show']);
+        Route::resource('pegawai', PegawaiController::class)->except('show')->parameters(['pegawai' => 'pegawai']);
+        Route::resource('siswa', SiswaController::class)->except('show')->parameters(['siswa' => 'siswa']);
     });
 
     // --- Status kepala sekolah (langkah 5) ------------------------------------

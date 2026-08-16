@@ -13,6 +13,10 @@
         <x-baris label="Siswa">
             @if ($surat->siswa)
                 {{ $surat->siswa->nama }}
+                @if ($surat->siswa->trashed())
+                    {{-- Siswa yang dihapus tetap bernama di surat lama (E8). --}}
+                    <span class="ms-1 rounded-full bg-latar px-2 py-0.5 text-xs text-redup">nonaktif</span>
+                @endif
             @elseif ($surat->siswa_id)
                 {{-- Tanpa foreign key, siswa_id bisa menunjuk baris yang sudah
                      tidak ada. Nomornya tetap ditampilkan agar dapat ditelusuri. --}}
