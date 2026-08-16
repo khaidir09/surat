@@ -5,6 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Dukungan\MembuatDataSurat;
 use Tests\TestCase;
 
 /**
@@ -13,7 +14,7 @@ use Tests\TestCase;
  */
 class RoleTest extends TestCase
 {
-    use RefreshDatabase;
+    use MembuatDataSurat, RefreshDatabase;
 
     /** @return array<string, array{string}> */
     public static function jalurKhususTas(): array
@@ -99,12 +100,16 @@ class RoleTest extends TestCase
      */
     public function test_jenis_di_luar_daftar_menghasilkan_404(): void
     {
+        $id = $this->buatSuratKeterangan();
+
+        // Ditolak oleh batasan route, bukan oleh controller: nama tabelnya
+        // memang "surat_keterangan", tetapi bukan itu nilai yang dikenal n8n.
         $this->actingAs(User::factory()->create())
-            ->get('/riwayat/surat_keterangan/1')
+            ->get("/riwayat/surat_keterangan/$id")
             ->assertNotFound();
 
         $this->actingAs(User::factory()->create())
-            ->get('/riwayat/keterangan_aktif/1')
+            ->get("/riwayat/keterangan_aktif/$id")
             ->assertOk();
     }
 }

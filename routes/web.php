@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BelumTersediaController;
 use App\Http\Controllers\PenggunaController;
+use App\Http\Controllers\RiwayatController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -51,9 +52,9 @@ Route::middleware(['auth', 'aktif'])->group(function () use ($belum, $jenis) {
     Route::get('/antrean/{jenis}/{id}/pdf', $belum)
         ->whereIn('jenis', $jenis)->whereNumber('id')->name('antrean.pdf');
 
-    // --- Riwayat surat (langkah 3) --------------------------------------------
-    Route::get('/riwayat', $belum)->name('riwayat.index');
-    Route::get('/riwayat/{jenis}/{id}', $belum)
+    // --- Riwayat surat (langkah 3, selesai) -----------------------------------
+    Route::get('/riwayat', [RiwayatController::class, 'index'])->name('riwayat.index');
+    Route::get('/riwayat/{jenis}/{id}', [RiwayatController::class, 'show'])
         ->whereIn('jenis', $jenis)->whereNumber('id')->name('riwayat.show');
 
     // --- Data master (langkah 4) ----------------------------------------------
