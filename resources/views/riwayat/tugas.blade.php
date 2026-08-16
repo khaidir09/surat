@@ -63,7 +63,8 @@
 
         <x-baris label="Berkas PDF">
             @if (filled($surat->pdf_url))
-                <a href="{{ $surat->pdf_url }}" target="_blank" rel="noopener" class="text-pine hover:underline">
+                <a href="{{ route('surat.pdf', ['surat_tugas', $surat->id]) }}"
+                   target="_blank" rel="noopener" class="text-pine hover:underline">
                     Unduh PDF
                 </a>
             @else

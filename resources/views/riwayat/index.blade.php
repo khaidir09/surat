@@ -98,7 +98,11 @@
                         </td>
                         <td class="px-4 py-3">
                             @if (filled($baris->pdf_url))
-                                <a href="{{ $baris->pdf_url }}" target="_blank" rel="noopener"
+                                {{-- Lewat route, bukan langsung ke pdf_url: kolom itu
+                                     hanya berisi nama objek di Supabase Storage, dan
+                                     menautkannya apa adanya menghasilkan 404. --}}
+                                <a href="{{ route('surat.pdf', [$baris->jenis, $baris->id]) }}"
+                                   target="_blank" rel="noopener"
                                    class="text-pine hover:underline">Unduh</a>
                             @else
                                 {{-- Tautan kosong tidak dijadikan tombol yang membuka

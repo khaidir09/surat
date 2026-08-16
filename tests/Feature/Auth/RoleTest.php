@@ -99,9 +99,12 @@ class RoleTest extends TestCase
 
     public function test_kepsek_boleh_mengunduh_pdf(): void
     {
-        // Bukan 200: PDF disimpan n8n, jadi Laravel mengalihkan ke URL-nya.
+        $id = $this->buatSuratTugas(['pdf_url' => 'https://contoh.test/x.pdf']);
+
+        // Bukan 200: berkasnya ada di Supabase Storage, jadi Laravel
+        // mengalihkan ke sana.
         $this->actingAs(User::factory()->kepsek()->create())
-            ->get('/antrean/surat_tugas/1/pdf')
+            ->get("/surat/surat_tugas/$id/pdf")
             ->assertRedirect('https://contoh.test/x.pdf');
     }
 

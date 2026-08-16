@@ -76,7 +76,7 @@
 
     @if ($bentuk === 'ttd')
         <div class="flex flex-wrap gap-2">
-            <a href="{{ route('antrean.pdf', [$jenis, $id]) }}" target="_blank" rel="noopener"
+            <a href="{{ route('surat.pdf', [$jenis, $id]) }}" target="_blank" rel="noopener"
                class="rounded-lg border border-garis px-4 py-2 text-sm hover:bg-latar">Unduh PDF</a>
 
             <form method="POST" action="{{ route('antrean.selesai', [$jenis, $id]) }}" data-kartu

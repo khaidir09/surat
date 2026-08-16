@@ -37,6 +37,12 @@ Two response shapes were confirmed against the live service and are easy to get 
 
 `N8nUnauthorizedException` deliberately **does not extend** `N8nException`. Controllers catch `N8nException` to show an in-form failure; a 401 means the *server's* `N8N_SECRET` is wrong, not the user's doing, so it renders its own page and never logs anyone out (E2). This differs from `kunciUlang()` in the old dashboard, where the access code belonged to the user.
 
+## PDFs
+
+`pdf_url` on the letter tables is **not a URL** — it holds an object name such as `SK-3.pdf` in a private Supabase Storage bucket. Linking it straight from Blade produces a 404; that shipped once. Always link through `route('surat.pdf', [$jenis, $id])`, which signs the object just before use.
+
+`App\Services\SupabaseStorage` signs with the `service_role` key (server-side only, like `N8N_SECRET`). The n8n `/surat-pdf` webhook is kept as a fallback for when that key is unset, but it serves **surat tugas only** — it answers `null` for surat keterangan, because the old dashboard never offered a download on those cards. Its signed URLs also expire after 60 seconds; ours default to 5 minutes.
+
 ## Two schemas, one database
 
 `DB_SEARCH_PATH=app,public` is load-bearing (K4). Postgres creates new tables in the first schema on the path, so:

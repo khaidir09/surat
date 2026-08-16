@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\N8nClient;
+use App\Services\SupabaseStorage;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -17,6 +18,13 @@ class AppServiceProvider extends ServiceProvider
             secret: config('n8n.secret'),
             timeout: config('n8n.timeout'),
             endpoint: config('n8n.endpoints'),
+        ));
+
+        $this->app->singleton(SupabaseStorage::class, fn () => new SupabaseStorage(
+            url: config('supabase.url'),
+            serviceKey: config('supabase.service_key'),
+            bucket: config('supabase.bucket_surat'),
+            ttl: config('supabase.ttl_url'),
         ));
     }
 

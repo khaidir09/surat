@@ -99,25 +99,6 @@ class AntreanController extends Controller
     }
 
     /**
-     * Kepsek boleh mengunduh PDF meski tidak boleh memutuskan (§6).
-     */
-    public function pdf(string $jenis, int $id, N8nClient $n8n): RedirectResponse
-    {
-        try {
-            $url = $n8n->pdf($id);
-        } catch (N8nException $e) {
-            return back()->withErrors(['antrean' => $e->getMessage()]);
-        }
-
-        if (blank($url)) {
-            // E15: tautan kosong tidak dibuka sebagai tab kosong.
-            return back()->withErrors(['antrean' => "Berkas PDF untuk surat #$id belum tersedia."]);
-        }
-
-        return redirect()->away($url);
-    }
-
-    /**
      * @param  array<int, array<string, mixed>>  $item
      * @return array<int, array<string, mixed>>
      */

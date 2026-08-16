@@ -211,21 +211,8 @@ class PutuskanTest extends TestCase
         $this->assertDatabaseCount('aktivitas', 0);
     }
 
-    /** E15: URL kosong tidak dibuka sebagai tab kosong. */
-    public function test_pdf_belum_tersedia_menampilkan_pesan(): void
-    {
-        Http::fake(['*' => Http::response([])]);
-
-        $this->get('/antrean/surat_tugas/12/pdf')->assertSessionHasErrors('antrean');
-    }
-
-    public function test_pdf_tersedia_dialihkan(): void
-    {
-        Http::fake(['*' => Http::response(['url' => 'https://contoh.test/surat-12.pdf'])]);
-
-        $this->get('/antrean/surat_tugas/12/pdf')
-            ->assertRedirect('https://contoh.test/surat-12.pdf');
-    }
+    // Pengunduhan PDF pindah ke SuratPdfController karena dipakai antrean
+    // maupun riwayat; pengujiannya ada di tests/Feature/SuratPdfTest.php.
 
     /**
      * §5.2: nama tabelnya "surat_keterangan", tetapi nilai yang dikenal n8n

@@ -8,6 +8,7 @@ use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\RiwayatController;
 use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\StatusKepsekController;
+use App\Http\Controllers\SuratPdfController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -50,9 +51,13 @@ Route::middleware(['auth', 'aktif'])->group(function () use ($jenis) {
             ->whereIn('jenis', $jenis)->whereNumber('id')->name('antrean.selesai');
     });
 
-    // Kepsek boleh mengunduh PDF, hanya tidak boleh memutuskan (§6).
-    Route::get('/antrean/{jenis}/{id}/pdf', [AntreanController::class, 'pdf'])
-        ->whereIn('jenis', $jenis)->whereNumber('id')->name('antrean.pdf');
+    // Dipakai antrean maupun riwayat, karena kolom pdf_url hanya berisi nama
+    // objek dan wajib ditandatangani lebih dulu — menautkannya langsung dari
+    // Blade menghasilkan 404. Kepsek boleh mengunduh, hanya tidak boleh
+    // memutuskan (§6). Menyimpang dari §7 yang menempatkannya di bawah
+    // /antrean saja.
+    Route::get('/surat/{jenis}/{id}/pdf', SuratPdfController::class)
+        ->whereIn('jenis', $jenis)->whereNumber('id')->name('surat.pdf');
 
     // --- Riwayat surat (langkah 3, selesai) -----------------------------------
     Route::get('/riwayat', [RiwayatController::class, 'index'])->name('riwayat.index');
