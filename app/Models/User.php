@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -12,20 +11,34 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    /** Staf Tata Administrasi Sekolah — memproses surat dan data master. */
+    public const ROLE_TAS = 'tas';
+
+    /** Kepala sekolah — hanya melihat, kecuali status kehadirannya sendiri. */
+    public const ROLE_KEPSEK = 'kepsek';
+
     /**
-     * The attributes that are mass assignable.
+     * Seluruh role yang dikenal, beserta labelnya untuk tampilan.
      *
-     * @var list<string>
+     * @var array<string, string>
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
+    public const ROLE = [
+        self::ROLE_TAS => 'Staf TAS',
+        self::ROLE_KEPSEK => 'Kepala Sekolah',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'nama',
+        'email',
+        'password',
+        'role',
+        'aktif',
+    ];
+
+    /**
      * @var list<string>
      */
     protected $hidden = [
@@ -34,15 +47,37 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'aktif' => 'boolean',
         ];
+    }
+
+    public function punyaRole(string ...$role): bool
+    {
+        return in_array($this->role, $role, true);
+    }
+
+    public function adalahTas(): bool
+    {
+        return $this->punyaRole(self::ROLE_TAS);
+    }
+
+    public function labelRole(): string
+    {
+        return self::ROLE[$this->role] ?? $this->role;
+    }
+
+    /**
+     * Halaman awal setiap role. Kepsek tidak punya akses ke antrean
+     * persetujuan, jadi tidak boleh didaratkan di sana.
+     */
+    public function rutaBeranda(): string
+    {
+        return $this->adalahTas() ? route('antrean.index') : route('riwayat.index');
     }
 }

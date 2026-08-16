@@ -4,9 +4,28 @@
 @source '../../storage/framework/views/*.php';
 @source "../**/*.blade.php";
 @source "../**/*.js";
-@source "../**/*.vue";
 
+/*
+ * Palet diambil dari :root milik dashboard lama (public/legacy/index.html)
+ * supaya staf TAS tidak merasa berpindah ke aplikasi yang sama sekali asing
+ * selama masa transisi.
+ *
+ * Font sengaja memakai stack sistem: dashboard ini dipakai dari jaringan
+ * sekolah dan tidak boleh bergantung pada unduhan font eksternal.
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: ui-sans-serif, system-ui, 'Segoe UI', sans-serif, 'Segoe UI Emoji';
+
+    --color-latar: #f4f6f3;
+    --color-permukaan: #ffffff;
+    --color-tinta: #1b2620;
+    --color-redup: #5c6b63;
+    --color-garis: #e1e6e0;
+    --color-pine: #16584a;
+    --color-pine-lembut: #e7f0ec;
+    --color-setuju: #1f7a43;
+    --color-tolak: #b23a32;
+    --color-amber: #a9721a;
+    --color-info: #1f5f8b;
+    --color-ket: #6d3b8e;
 }
