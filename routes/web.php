@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Controllers\AgendaController;
+use App\Http\Controllers\AntreanController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\BelumTersediaController;
 use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\RiwayatController;
@@ -12,15 +12,13 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |------------------------------------------------------------------------------
-| Kerangka route mengikuti §7 docs/specs/dashboard-laravel-surat.md.
+| Route mengikuti §7 docs/specs/dashboard-laravel-surat.md — seluruhnya terisi.
 |
-| Yang sudah terisi pada langkah 2: autentikasi dan kelola pengguna. Sisanya
-| diarahkan ke BelumTersediaController — alamat dan middleware role-nya sudah
-| final, hanya isinya yang menyusul.
+| Pembatasan role ditegakkan di sini, bukan dengan menyembunyikan tombol di
+| Blade: menu yang disaring hanya merapikan tampilan, sedangkan permintaan
+| yang ditembakkan langsung tetap harus ditolak.
 |------------------------------------------------------------------------------
 */
-
-$belum = BelumTersediaController::class;
 
 // Nilai {jenis} mengikuti yang diterima webhook n8n, bukan nama tabel:
 // surat keterangan dikirim sebagai "keterangan_aktif" (lihat config/n8n.php).
@@ -37,23 +35,23 @@ Route::post('/logout', [LoginController::class, 'keluar'])
     ->middleware('auth')
     ->name('logout');
 
-Route::middleware(['auth', 'aktif'])->group(function () use ($belum, $jenis) {
+Route::middleware(['auth', 'aktif'])->group(function () use ($jenis) {
 
     Route::get('/', fn () => redirect(request()->user()->rutaBeranda()))->name('beranda');
 
-    // --- Antrean persetujuan (langkah 6) --------------------------------------
-    Route::middleware('role:tas')->group(function () use ($belum, $jenis) {
-        Route::get('/antrean', $belum)->name('antrean.index');
+    // --- Antrean persetujuan (langkah 6, selesai) -----------------------------
+    Route::middleware('role:tas')->group(function () use ($jenis) {
+        Route::get('/antrean', [AntreanController::class, 'index'])->name('antrean.index');
 
-        Route::post('/antrean/{jenis}/{id}/putuskan', $belum)
+        Route::post('/antrean/{jenis}/{id}/putuskan', [AntreanController::class, 'putuskan'])
             ->whereIn('jenis', $jenis)->whereNumber('id')->name('antrean.putuskan');
 
-        Route::post('/antrean/{jenis}/{id}/selesai', $belum)
+        Route::post('/antrean/{jenis}/{id}/selesai', [AntreanController::class, 'selesai'])
             ->whereIn('jenis', $jenis)->whereNumber('id')->name('antrean.selesai');
     });
 
     // Kepsek boleh mengunduh PDF, hanya tidak boleh memutuskan (§6).
-    Route::get('/antrean/{jenis}/{id}/pdf', $belum)
+    Route::get('/antrean/{jenis}/{id}/pdf', [AntreanController::class, 'pdf'])
         ->whereIn('jenis', $jenis)->whereNumber('id')->name('antrean.pdf');
 
     // --- Riwayat surat (langkah 3, selesai) -----------------------------------

@@ -118,19 +118,41 @@ class N8nClientTest extends TestCase
         }
     }
 
-    public function test_pending_menormalkan_objek_tunggal_menjadi_array(): void
+    /**
+     * Bentuk sebenarnya, terverifikasi terhadap respons n8n 16 Agu 2026.
+     */
+    public function test_pending_membuka_bungkus_items(): void
     {
-        Http::fake(['*' => Http::response(['id' => 1, 'jenis' => 'surat_tugas'])]);
+        Http::fake(['*' => Http::response(['items' => [
+            ['id' => 3, 'jenis' => 'keterangan_aktif', 'status' => 'menunggu'],
+        ]])]);
 
         $hasil = $this->klien()->pending();
 
         $this->assertCount(1, $hasil);
-        $this->assertSame(1, $hasil[0]['id']);
+        $this->assertSame(3, $hasil[0]['id']);
+    }
+
+    /**
+     * Dashboard lama menerima kedua bentuk (index.html:519) dan tidak ada
+     * yang menjamin n8n selalu membalas dengan bentuk yang sama.
+     */
+    public function test_pending_juga_menerima_array_telanjang(): void
+    {
+        Http::fake(['*' => Http::response([
+            ['id' => 7, 'jenis' => 'surat_tugas', 'status' => 'menunggu'],
+        ])]);
+
+        $this->assertSame(7, $this->klien()->pending()[0]['id']);
     }
 
     public function test_pending_kosong_menghasilkan_array_kosong(): void
     {
         Http::fake(['*' => Http::response([])]);
+
+        $this->assertSame([], $this->klien()->pending());
+
+        Http::fake(['*' => Http::response(['items' => []])]);
 
         $this->assertSame([], $this->klien()->pending());
     }

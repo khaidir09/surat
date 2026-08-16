@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Dukungan\MembuatDataSurat;
 use Tests\TestCase;
@@ -15,6 +16,15 @@ use Tests\TestCase;
 class RoleTest extends TestCase
 {
     use MembuatDataSurat, RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Halaman antrean dan tautan PDF memanggil n8n. Tanpa fake, tes
+        // matriks role akan memproses surat sungguhan.
+        Http::fake(['*' => Http::response(['items' => [], 'url' => 'https://contoh.test/x.pdf'])]);
+    }
 
     /** @return array<string, array{string}> */
     public static function jalurKhususTas(): array
@@ -89,9 +99,10 @@ class RoleTest extends TestCase
 
     public function test_kepsek_boleh_mengunduh_pdf(): void
     {
+        // Bukan 200: PDF disimpan n8n, jadi Laravel mengalihkan ke URL-nya.
         $this->actingAs(User::factory()->kepsek()->create())
             ->get('/antrean/surat_tugas/1/pdf')
-            ->assertOk();
+            ->assertRedirect('https://contoh.test/x.pdf');
     }
 
     /**

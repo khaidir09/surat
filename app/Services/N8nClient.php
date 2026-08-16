@@ -37,9 +37,15 @@ class N8nClient
     {
         $data = $this->kirim('get', $this->endpoint['pending']);
 
-        // n8n pernah membalas objek tunggal alih-alih array ketika hanya ada
-        // satu item. Dinormalkan di sini supaya pemanggil tidak perlu tahu.
-        return array_is_list($data) ? $data : (empty($data) ? [] : [$data]);
+        // n8n membungkus hasilnya sebagai {"items": [...]} — terverifikasi
+        // terhadap respons sungguhan 16 Agu 2026. Bentuk array telanjang juga
+        // diterima karena dashboard lama menangani keduanya (index.html:519),
+        // dan tidak ada yang menjamin n8n selalu memakai bentuk yang sama.
+        if (array_is_list($data)) {
+            return $data;
+        }
+
+        return is_array($data['items'] ?? null) ? $data['items'] : [];
     }
 
     /**
@@ -69,6 +75,14 @@ class N8nClient
     public function pdf(int $id): ?string
     {
         $data = $this->kirim('get', $this->endpoint['pdf'], ['id' => $id]);
+
+        // n8n kadang membungkus balasannya dalam array satu elemen. Dashboard
+        // lama sudah menangani keduanya (index.html:681-683); kalau di sini
+        // hanya salah satu yang ditangani, tombol unduh akan diam tanpa
+        // penjelasan pada bentuk yang lain.
+        if (array_is_list($data)) {
+            $data = $data[0] ?? [];
+        }
 
         return $data['url'] ?? null;
     }

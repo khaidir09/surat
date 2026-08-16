@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class PenggunaTest extends TestCase
@@ -130,6 +131,9 @@ class PenggunaTest extends TestCase
     public function test_secret_n8n_tidak_muncul_di_halaman(): void
     {
         config(['n8n.secret' => 'kode-rahasia-server']);
+
+        // /antrean memanggil n8n; tanpa fake, tes ini akan menembak produksi.
+        Http::fake(['*' => Http::response(['items' => []])]);
 
         $halaman = ['/pengguna', '/riwayat', '/agenda', '/status-kepsek', '/antrean'];
 
