@@ -51,10 +51,9 @@ class AntreanController extends Controller
             // Divalidasi di server, bukan hanya di klien seperti
             // index.html:612 yang dapat dilewati begitu saja (E4).
             'nomor' => ['exclude_unless:aksi,setujui', 'required', 'regex:/^\d+$/'],
-        ], [
-            'nomor.required' => 'Nomor urut surat wajib diisi saat menyetujui.',
-            'nomor.regex' => 'Nomor urut harus berupa angka saja, sesuai buku agenda.',
         ]);
+        // Pesannya ada di lang/id/validation.php agar tidak ada dua tempat
+        // yang bisa berbeda bunyi untuk kesalahan yang sama.
 
         $nomor = $data['nomor'] ?? null;
 

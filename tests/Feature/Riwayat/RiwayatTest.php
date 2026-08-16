@@ -125,7 +125,11 @@ class RiwayatTest extends TestCase
         $this->get('/riwayat')
             ->assertOk()
             ->assertSee('30 surat ditemukan')
-            ->assertSee('pagination', escape: false);
+            ->assertSee('Berikutnya', escape: false)
+            // Versi sebelumnya menegaskan adanya kata "pagination" dan lulus
+            // justru karena tombolnya menampilkan kunci mentah
+            // "pagination.previous" — tes yang mengunci sebuah cacat.
+            ->assertDontSee('pagination.', escape: false);
     }
 
     /** E9, E10, E11: seluruh kolom bisa NULL. */

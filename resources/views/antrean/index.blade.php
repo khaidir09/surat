@@ -122,13 +122,25 @@
         // Padanan kelas .busy pada index.html:300-303. Mencegah klik ganda
         // yang akan mengirim dua keputusan untuk satu surat.
         document.querySelectorAll('form[data-kartu]').forEach((form) => {
-            form.addEventListener('submit', () => {
-                form.closest('article')
-                    .querySelectorAll('button, a')
-                    .forEach((el) => {
-                        el.setAttribute('disabled', 'disabled');
-                        el.classList.add('pointer-events-none', 'opacity-50');
-                    });
+            form.addEventListener('submit', (peristiwa) => {
+                // JANGAN menonaktifkan tombol di sini.
+                //
+                // Aksi (setujui/tolak) dibawa oleh tombol yang ditekan, dan
+                // peramban tidak menyertakan kontrol ber-atribut disabled ke
+                // dalam payload. Versi pertama halaman ini menonaktifkan
+                // seluruh tombol kartu saat submit, sehingga "aksi" lenyap
+                // sebelum terkirim dan setiap keputusan gagal.
+                //
+                // Menandai form dan meredupkan kartu mencapai tujuan yang sama
+                // — mencegah keputusan ganda untuk satu surat — tanpa pernah
+                // menyentuh isi yang dikirim.
+                if (form.dataset.terkirim) {
+                    peristiwa.preventDefault();
+                    return;
+                }
+
+                form.dataset.terkirim = '1';
+                form.closest('article').classList.add('opacity-50', 'pointer-events-none');
             });
         });
     </script>

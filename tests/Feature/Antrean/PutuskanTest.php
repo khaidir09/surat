@@ -93,6 +93,25 @@ class PutuskanTest extends TestCase
     }
 
     /**
+     * Pesan validasi harus terbaca manusia, bukan kunci terjemahan mentah.
+     *
+     * Pernah terjadi sungguhan: APP_LOCALE dan APP_FALLBACK_LOCALE sama-sama
+     * "id" sementara direktori lang belum ada, sehingga staf hanya melihat
+     * "validation.required" dan tidak tahu apa yang harus diperbaiki.
+     */
+    public function test_pesan_validasi_terbaca_bukan_kunci_mentah(): void
+    {
+        Http::fake();
+
+        $this->post('/antrean/surat_tugas/12/putuskan', [])->assertSessionHasErrors('aksi');
+
+        $pesan = session('errors')->first('aksi');
+
+        $this->assertStringNotContainsString('validation.', $pesan);
+        $this->assertStringContainsString('Setujui', $pesan);
+    }
+
+    /**
      * E5: nomor ganda diperingatkan, TIDAK diblokir. Buku agenda fisik adalah
      * otoritasnya; sistem yang menolak akan memaksa staf mencari jalan keluar
      * di luar sistem.
