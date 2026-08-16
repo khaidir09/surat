@@ -13,9 +13,18 @@
         : null;
 
     $awalan = $jenis === 'surat_tugas' ? 'ST' : 'SK';
+
+    // Aksen garis kiri 4px per seksi, sama seperti .card / .card.ttd /
+    // .card.ket pada index.html:199-207 — penanda cepat yang sudah dikenal
+    // staf untuk membedakan jenis kartu tanpa membaca judulnya.
+    $aksen = match ($bentuk) {
+        'ttd' => 'border-l-info',
+        'keterangan' => 'border-l-ket',
+        default => 'border-l-amber',
+    };
 @endphp
 
-<article {{ $attributes->merge(['class' => 'rounded-xl border border-garis bg-permukaan p-4']) }}>
+<article {{ $attributes->merge(['class' => "rounded-xl border border-garis border-l-4 $aksen bg-permukaan p-4"]) }}>
     <div class="mb-3 flex items-baseline justify-between gap-3">
         <span class="rounded bg-latar px-2 py-0.5 text-xs font-medium">#{{ $awalan }}-{{ $id }}</span>
         @if ($sejak)

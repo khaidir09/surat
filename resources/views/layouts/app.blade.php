@@ -17,10 +17,10 @@
     $menu = array_filter([
         ['antrean.index', 'Antrean', $pengguna->adalahTas()],
         ['riwayat.index', 'Riwayat', true],
-        ['agenda.index', 'Agenda', true],
         ['pegawai.index', 'Pegawai', $pengguna->adalahTas()],
         ['siswa.index', 'Siswa', $pengguna->adalahTas()],
         ['status-kepsek.form', 'Status Kepsek', true],
+        ['agenda.index', 'Agenda', true],
         ['pengguna.index', 'Pengguna', $pengguna->adalahTas()],
     ], fn ($item) => $item[2]);
 @endphp

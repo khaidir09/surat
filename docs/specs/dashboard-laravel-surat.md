@@ -421,6 +421,10 @@ Ditegaskan agar tidak ada kebingungan di kemudian hari:
 
 ## 13. Verifikasi end-to-end
 
+> **Hasil per 16 Agu 2026.** V-0, V-2, V-3, V-5 **lulus**; V-4 lulus kecuali langkah 2. **V-1 belum dijalankan** — satu-satunya yang tersisa, dan hanya dapat dilakukan dengan menyetujui surat sungguhan. Sampai V-1 lulus, `public/legacy/index.html` **tidak boleh dipensiunkan**.
+>
+> Yang sudah terbukti nyata terhadap produksi: seluruh jalur baca, jalur tulis Laravel ke `public.siswa`, dan satu panggilan tulis ke n8n (`/status-kepsek`, tercatat di `app.aktivitas` #1). Yang belum: `/surat-keputusan` dan `/surat-selesai`, keduanya baru teruji lewat `Http::fake()`.
+
 ### V-0 Prasyarat
 1. ✅ `php -m | grep pgsql` menampilkan `pdo_pgsql` — lulus 16 Agu 2026
 2. `php artisan migrate --pretend` menunjukkan seluruh operasi menyasar schema `app` atau berupa `ALTER TABLE … ADD COLUMN`
@@ -561,7 +565,7 @@ Database pengujian: Postgres lokal terpisah, **bukan** Supabase produksi. Ini me
 4. ~~CRUD data master (AC-4)~~ — **selesai.** Migration §5.3 sudah dijalankan di produksi; 615 siswa, 79 pegawai, 32 agenda, dan 3 surat terverifikasi utuh sesudahnya. `app.aktivitas` berdiri di schema `app`. **Koreksi terhadap §5.3:** `agenda.created_at` dibuat **tanpa** `default now()` — `add column ... default` mengisi seluruh baris lama dengan waktu migrasi berjalan, sehingga 32 kegiatan lama akan mengaku dibuat pada detik itu; NULL jujur berarti "tidak diketahui". **Belum termasuk:** impor CSV yang disebut §7 (tidak ada di AC-4)
 5. ~~`N8nClient` + status kepsek (AC-5, AC-6)~~ — **selesai.** Kelima endpoint terbungkus `App\Services\N8nClient`; kredensial hanya dibaca di `AppServiceProvider`. `N8nUnauthorizedException` sengaja **tidak** mewarisi `N8nException` supaya 401 tidak ikut tertangkap penanganan kegagalan biasa dan tersamar sebagai kesalahan pengisian (E2). Terverifikasi terhadap n8n sungguhan lewat `/surat-pending` (GET, tanpa efek samping): secret diterima, antrean kosong. **Menemukan RS15** — CA bundle PHP kedaluwarsa
 6. ~~Antrean persetujuan (AC-2)~~ — **selesai.** **Koreksi kontrak §8:** `/surat-pending` membalas `{"items": [...]}`, bukan array telanjang (terverifikasi 16 Agu 2026); `/surat-pdf` kadang membungkus balasannya dalam array satu elemen. Keduanya sudah ditangani `N8nClient`, seperti `index.html:519,681`. Nomor surat kini diketik di dalam kartu, bukan lewat `prompt()` — penomoran manual tetap disengaja (K9), tetapi `prompt()` tidak dapat divalidasi ulang dan menghapus isian saat gagal. Muat ulang otomatis 30 detik **sengaja dihapus**: pemuatan ulang di tengah pengetikan nomor akan menghilangkannya. **Belum terverifikasi dengan data sungguhan:** seluruh jalur tulis (setujui, tolak, selesai) — memanggilnya berarti menerbitkan surat betulan dan memberi notifikasi ke pemohon
-7. Verifikasi V-1 sampai V-5, lalu pensiunkan `index.html` dan `index copy.html`
+7. **Sebagian selesai.** V-0, V-2, V-3, V-5 lulus; V-4 lulus kecuali langkah 2 (butuh chatbot). **V-1 tertunda** — menuntut persetujuan surat sungguhan. `public/legacy/index.html` **tetap dipertahankan** sampai V-1 lulus; mempensiunkannya sekarang berarti staf kehilangan alat kerja yang terbukti demi alat yang belum
 8. Tulis ulang `CLAUDE.md`
 
 Langkah 3 sengaja mendahului langkah 6: halaman riwayat tidak menyentuh alur yang sedang dipakai staf setiap hari, sehingga aman dijadikan tempat mematangkan pola.
