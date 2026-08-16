@@ -1,6 +1,6 @@
 # Spesifikasi: Dashboard Laravel untuk Sistem Surat SMKN 1 Amuntai
 
-**Status:** Dalam pengerjaan — §17 langkah 1–6 selesai (seluruh fitur berdiri), lanjut ke langkah 7 (verifikasi V-1..V-5 dengan data sungguhan) dan 8 (tulis ulang `CLAUDE.md`). §14.2, §14.3, §14.6, §14.8 terjawab; §14.1 terjawab sebagian (nilai penolakan belum diketahui, ditangani lewat K12); §14.4, §14.5 relevan saat menulis migration
+**Status:** Seluruh langkah §17 selesai. Dashboard Laravel dipakai di produksi dan sudah menerbitkan surat sungguhan. Dua hal tersisa, keduanya menunggu kejadian nyata, bukan pekerjaan kode: `/surat-selesai` belum pernah dipanggil (menunggu satu surat tugas melewati antrean), dan nilai status penolakan masih belum diketahui (§14.1, RS14). §14.2, §14.3, §14.6, §14.8 terjawab; §14.1 terjawab sebagian (nilai penolakan belum diketahui, ditangani lewat K12); §14.4, §14.5 relevan saat menulis migration
 **Tanggal:** 15 Agustus 2026, diperbarui 16 Agustus 2026
 **Penulis:** Hasil wawancara kebutuhan dengan Muhammad Khaidir
 
@@ -421,9 +421,11 @@ Ditegaskan agar tidak ada kebingungan di kemudian hari:
 
 ## 13. Verifikasi end-to-end
 
-> **Hasil per 16 Agu 2026.** V-0, V-2, V-3, V-5 **lulus**; V-4 lulus kecuali langkah 2. **V-1 belum dijalankan** — satu-satunya yang tersisa, dan hanya dapat dilakukan dengan menyetujui surat sungguhan. Sampai V-1 lulus, `public/legacy/index.html` **tidak boleh dipensiunkan**.
+> **Hasil per 16 Agu 2026.** V-0, V-2, V-3, V-4 (kecuali langkah 2), V-5 **lulus**. **V-1 lulus untuk jalur surat keterangan**: `app.aktivitas` #2 mencatat `setujui` pada `keterangan_aktif#3` dengan nomor 89 oleh Staf TAS; suratnya terbit sebagai `400.3.12.1/89-SMKN.1-AT/2026`, berstatus `selesai`, `pdf_url` terisi, dan antrean kembali kosong.
 >
-> Yang sudah terbukti nyata terhadap produksi: seluruh jalur baca, jalur tulis Laravel ke `public.siswa`, dan satu panggilan tulis ke n8n (`/status-kepsek`, tercatat di `app.aktivitas` #1). Yang belum: `/surat-keputusan` dan `/surat-selesai`, keduanya baru teruji lewat `Http::fake()`.
+> **Temuan alur:** surat keterangan langsung menjadi `selesai` setelah disetujui dan **tidak pernah melewati `menunggu_ttd`** — tahap itu hanya berlaku bagi surat tugas, sesuai `kartuKeterangan()` lama yang memang tidak punya varian TTD. Akibatnya `/surat-selesai` (tombol "Sudah ditandatangani") masih **belum pernah dipanggil sungguhan**; ia menunggu satu surat tugas melewati antrean.
+>
+> Karena itu `public/legacy/index.html` masih dipertahankan.
 
 ### V-0 Prasyarat
 1. ✅ `php -m | grep pgsql` menampilkan `pdo_pgsql` — lulus 16 Agu 2026
@@ -566,7 +568,7 @@ Database pengujian: Postgres lokal terpisah, **bukan** Supabase produksi. Ini me
 5. ~~`N8nClient` + status kepsek (AC-5, AC-6)~~ — **selesai.** Kelima endpoint terbungkus `App\Services\N8nClient`; kredensial hanya dibaca di `AppServiceProvider`. `N8nUnauthorizedException` sengaja **tidak** mewarisi `N8nException` supaya 401 tidak ikut tertangkap penanganan kegagalan biasa dan tersamar sebagai kesalahan pengisian (E2). Terverifikasi terhadap n8n sungguhan lewat `/surat-pending` (GET, tanpa efek samping): secret diterima, antrean kosong. **Menemukan RS15** — CA bundle PHP kedaluwarsa
 6. ~~Antrean persetujuan (AC-2)~~ — **selesai.** **Koreksi kontrak §8:** `/surat-pending` membalas `{"items": [...]}`, bukan array telanjang (terverifikasi 16 Agu 2026); `/surat-pdf` kadang membungkus balasannya dalam array satu elemen. Keduanya sudah ditangani `N8nClient`, seperti `index.html:519,681`. Nomor surat kini diketik di dalam kartu, bukan lewat `prompt()` — penomoran manual tetap disengaja (K9), tetapi `prompt()` tidak dapat divalidasi ulang dan menghapus isian saat gagal. Muat ulang otomatis 30 detik **sengaja dihapus**: pemuatan ulang di tengah pengetikan nomor akan menghilangkannya. **Belum terverifikasi dengan data sungguhan:** seluruh jalur tulis (setujui, tolak, selesai) — memanggilnya berarti menerbitkan surat betulan dan memberi notifikasi ke pemohon
 7. **Sebagian selesai.** V-0, V-2, V-3, V-5 lulus; V-4 lulus kecuali langkah 2 (butuh chatbot). **V-1 tertunda** — menuntut persetujuan surat sungguhan. `public/legacy/index.html` **tetap dipertahankan** sampai V-1 lulus; mempensiunkannya sekarang berarti staf kehilangan alat kerja yang terbukti demi alat yang belum
-8. Tulis ulang `CLAUDE.md`
+8. ~~Tulis ulang `CLAUDE.md`~~ — **selesai.** Disusun mengikuti kenyataan setelah migrasi, bukan sekadar mengganti nama teknologi: berisi cacat-cacat yang pernah benar-benar terjadi (tombol disabled menghapus `aksi`, cadangan locale `id` menampilkan kunci mentah, `add column ... default` memalsukan jejak waktu) agar tidak terulang
 
 Langkah 3 sengaja mendahului langkah 6: halaman riwayat tidak menyentuh alur yang sedang dipakai staf setiap hari, sehingga aman dijadikan tempat mematangkan pola.
 
