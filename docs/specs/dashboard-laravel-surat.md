@@ -544,6 +544,10 @@ tests/Feature/StatusKepsekTest.php              kedua role, kegagalan n8n
 tests/Unit/N8nClientTest.php                    header, timeout, pemetaan exception
 ```
 
+Database pengujian **sudah disiapkan**: PostgreSQL 17.11 lokal (mayor yang sama dengan produksi 17.6), service `postgresql-x64-17`, database `surat_uji` milik role `surat_test`, di **port 5433**. Port sengaja bukan 5432 agar tidak ada satu pun nilai koneksi tes yang kebetulan cocok dengan produksi. Konfigurasinya ada di `phpunit.xml` beserta perintah penyiapan untuk mesin baru.
+
+Alasan pemisahan ini bukan sekadar kerapian: `RefreshDatabase` menjalankan `migrate:fresh`, yang menghapus seluruh tabel pada `search_path`. Satu kesalahan konfigurasi yang mengarahkannya ke Supabase akan menghapus data surat sekolah.
+
 Database pengujian: Postgres lokal terpisah, **bukan** Supabase produksi. Ini menuntut migration yang dapat membangun tabel `public` dari nol untuk keperluan tes — sementara di produksi tabel tersebut sudah ada dan tidak boleh disentuh. Perbedaan ini harus disadari saat menulis migration.
 
 ---
