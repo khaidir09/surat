@@ -1,6 +1,6 @@
 # Spesifikasi: Dashboard Laravel untuk Sistem Surat SMKN 1 Amuntai
 
-**Status:** Dalam pengerjaan — §17 langkah 1 selesai, lanjut ke langkah 2 (auth + role). §14.2, §14.3, §14.6, §14.8 terjawab; §14.1 terjawab sebagian (nilai penolakan belum diketahui, ditangani lewat K12); §14.4, §14.5 relevan saat menulis migration
+**Status:** Dalam pengerjaan — §17 langkah 1 dan 2 selesai, lanjut ke langkah 3 (riwayat surat). §14.2, §14.3, §14.6, §14.8 terjawab; §14.1 terjawab sebagian (nilai penolakan belum diketahui, ditangani lewat K12); §14.4, §14.5 relevan saat menulis migration
 **Tanggal:** 15 Agustus 2026, diperbarui 16 Agustus 2026
 **Penulis:** Hasil wawancara kebutuhan dengan Muhammad Khaidir
 
@@ -551,7 +551,7 @@ Database pengujian: Postgres lokal terpisah, **bukan** Supabase produksi. Ini me
 ## 17. Urutan pengerjaan yang disarankan
 
 1. ~~`.gitignore`, `composer create-project`, koneksi ke Supabase, schema `app`~~ — **selesai.** Laravel 12.66.0, Postgres 17.6 lewat Session pooler `aws-0-ap-northeast-1.pooler.supabase.com:5432` (Direct connection tidak dipakai: hostnya IPv6-only dan tidak terjangkau dari jaringan sekolah). Migration bawaan Laravel mendarat di schema `app` (9 tabel), `public` tetap 10 tabel milik n8n — K4 terbukti berjalan. Sisa tindakan manual: mengarahkan vhost Laragon ke `public/`
-2. Auth + role + halaman kelola pengguna (AC-1) — fondasi bagi semua yang lain
+2. ~~Auth + role + halaman kelola pengguna (AC-1)~~ — **selesai.** Kerangka route §7 ikut didaftarkan seluruhnya agar matriks role dapat diuji sekarang; yang belum dikerjakan diarahkan ke `BelumTersediaController`. Tambahan di luar spesifikasi: akun TAS aktif terakhir tidak boleh dinonaktifkan atau diturunkan rolenya, karena tanpa itu sistem terkunci permanen. Sisa tindakan manual: `php artisan db:seed` untuk membuat akun TAS pertama
 3. Model read-only surat + halaman riwayat (AC-3) — tidak menulis apa pun, risiko terendah. **Catatan RS13:** dengan hanya 3 surat di database, manfaatnya belum terasa hari ini dan baru tumbuh seiring waktu. Tetap dikerjakan lebih dulu karena membangun pola query dan tampilan yang dipakai ulang di langkah berikutnya — bukan karena nilainya paling besar
 4. CRUD data master (AC-4) — tulisan pertama Laravel ke schema `public`
 5. `N8nClient` + status kepsek (AC-5, AC-6) — integrasi paling sederhana sebagai uji coba
