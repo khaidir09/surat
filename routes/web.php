@@ -7,6 +7,7 @@ use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\RiwayatController;
 use App\Http\Controllers\SiswaController;
+use App\Http\Controllers\StatusKepsekController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -70,9 +71,11 @@ Route::middleware(['auth', 'aktif'])->group(function () use ($belum, $jenis) {
         Route::resource('siswa', SiswaController::class)->except('show')->parameters(['siswa' => 'siswa']);
     });
 
-    // --- Status kepala sekolah (langkah 5) ------------------------------------
-    Route::get('/status-kepsek', $belum)->name('status-kepsek.form');
-    Route::post('/status-kepsek', $belum)->name('status-kepsek.store');
+    // --- Status kepala sekolah (langkah 5, selesai) ---------------------------
+    // Kedua role boleh memperbarui (§6): kepsek mengabarkan sendiri, TAS
+    // memperbarui atas nama beliau saat sedang tidak memegang perangkat.
+    Route::get('/status-kepsek', [StatusKepsekController::class, 'form'])->name('status-kepsek.form');
+    Route::post('/status-kepsek', [StatusKepsekController::class, 'store'])->name('status-kepsek.store');
 
     // --- Kelola pengguna (langkah 2, selesai) ---------------------------------
     Route::middleware('role:tas')->group(function () {

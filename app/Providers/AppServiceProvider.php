@@ -2,13 +2,22 @@
 
 namespace App\Providers;
 
+use App\Services\N8nClient;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Satu-satunya tempat konfigurasi n8n dibaca. Controller menerima
+        // N8nClient lewat injeksi dan tidak pernah menyentuh config() sendiri,
+        // sehingga tidak ada URL maupun secret yang tersebar (AC-6).
+        $this->app->singleton(N8nClient::class, fn () => new N8nClient(
+            baseUrl: config('n8n.base_url'),
+            secret: config('n8n.secret'),
+            timeout: config('n8n.timeout'),
+            endpoint: config('n8n.endpoints'),
+        ));
     }
 
     public function boot(): void
