@@ -59,19 +59,14 @@ class SupabaseStorage
             throw new SupabaseException('Penyimpanan berkas tidak dapat dihubungi. Coba lagi beberapa saat.', 0, $e);
         }
 
-        if ($respons->status() === 404) {
-            // Dibedakan dari kegagalan lain: berkasnya memang belum ada,
-            // dan tidak ada gunanya menyuruh staf mencoba lagi.
-            throw new SupabaseException("Berkas $objek tidak ditemukan di penyimpanan.");
-        }
-
         if (! $respons->successful()) {
             Log::warning('Supabase Storage menolak permintaan tanda tangan', [
                 'objek' => $objek,
                 'status' => $respons->status(),
+                'kode' => $respons->json('code'),
             ]);
 
-            throw new SupabaseException("Penyimpanan berkas membalas kesalahan (HTTP {$respons->status()}).");
+            throw new SupabaseException($this->jelaskanKegagalan($respons->status(), $respons->json() ?: [], $objek));
         }
 
         // Balasannya berbentuk {"signedURL": "/object/sign/surat/SK-3.pdf?token=..."}
@@ -83,5 +78,58 @@ class SupabaseStorage
         }
 
         return $dasar . '/' . ltrim($jalur, '/');
+    }
+
+    /**
+     * Menerjemahkan kegagalan menjadi kalimat yang menunjuk perbaikannya.
+     *
+     * Supabase membungkus 404 di dalam balasan HTTP 400
+     * ({"statusCode":"404","code":"NoSuchKey"}), sehingga status HTTP saja
+     * menyesatkan. Lebih menyesatkan lagi: kunci yang tidak berwenang membaca
+     * bucket menerima jawaban "Object not found" yang sama persis dengan
+     * berkas yang memang tidak ada.
+     *
+     * @param  array<string, mixed>  $isi
+     */
+    private function jelaskanKegagalan(int $status, array $isi, string $objek): string
+    {
+        $tidakDitemukan = ($isi['statusCode'] ?? null) === '404'
+            || ($isi['code'] ?? null) === 'NoSuchKey'
+            || $status === 404;
+
+        if ($tidakDitemukan) {
+            return "Berkas $objek tidak ditemukan di penyimpanan." . $this->peringatanKunci();
+        }
+
+        if (in_array($status, [401, 403], true)) {
+            return 'Penyimpanan berkas menolak kredensial server.' . $this->peringatanKunci();
+        }
+
+        return "Penyimpanan berkas membalas kesalahan (HTTP $status)." . $this->peringatanKunci();
+    }
+
+    /**
+     * Kunci Supabase gaya lama berupa JWT yang menyebut perannya sendiri.
+     * Diperiksa hanya ketika sesuatu sudah gagal — bukan pada setiap
+     * permintaan — supaya jalur normal tidak menanggung biayanya.
+     */
+    private function peringatanKunci(): string
+    {
+        $bagian = explode('.', (string) $this->serviceKey);
+
+        if (count($bagian) !== 3) {
+            return '';
+        }
+
+        $muatan = json_decode(base64_decode(strtr($bagian[1], '-_', '+/')) ?: '{}', true);
+        $peran = $muatan['role'] ?? null;
+
+        if ($peran && $peran !== 'service_role') {
+            return " Kunci yang terpasang berperan \"$peran\", bukan service_role;"
+                . ' kunci itu tidak berwenang membaca bucket privat, sehingga berkas yang ada pun'
+                . ' dilaporkan tidak ditemukan. Admin perlu mengganti SUPABASE_SERVICE_KEY.';
+        }
+
+        return '';
     }
 }

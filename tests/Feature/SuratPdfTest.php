@@ -75,17 +75,67 @@ class SuratPdfTest extends TestCase
             ->assertSessionHasErrors('pdf');
     }
 
-    public function test_objek_hilang_di_penyimpanan(): void
+    /**
+     * Supabase membungkus 404 di dalam balasan HTTP 400, sehingga status HTTP
+     * saja menyesatkan.
+     */
+    public function test_objek_hilang_dilaporkan_sebagai_400_berisi_404(): void
     {
         $this->denganSupabase();
 
-        Http::fake(['*' => Http::response(['error' => 'not_found'], 404)]);
+        Http::fake(['*' => Http::response([
+            'statusCode' => '404', 'error' => 'not_found', 'code' => 'NoSuchKey',
+        ], 400)]);
 
         $id = $this->buatSuratTugas(['pdf_url' => 'ST-99.pdf']);
 
         $this->actingAs(User::factory()->create())
             ->get("/surat/surat_tugas/$id/pdf")
             ->assertSessionHasErrors('pdf');
+
+        $this->assertStringContainsString('tidak ditemukan', session('errors')->first('pdf'));
+    }
+
+    /**
+     * Kunci anon menerima jawaban "Object not found" yang sama persis dengan
+     * berkas yang memang tidak ada — pernah membingungkan di produksi.
+     * Pesannya harus membedakan keduanya.
+     */
+    public function test_kunci_bukan_service_role_dijelaskan(): void
+    {
+        $this->denganSupabase();
+
+        // JWT dengan payload {"role":"anon"}; tanda tangannya tidak diperiksa.
+        config(['supabase.service_key' => 'header.' . rtrim(strtr(base64_encode('{"role":"anon"}'), '+/', '-_'), '=') . '.tandatangan']);
+
+        Http::fake(['*' => Http::response(['statusCode' => '404', 'code' => 'NoSuchKey'], 400)]);
+
+        $id = $this->buatSuratTugas(['pdf_url' => 'ST-13.pdf']);
+
+        $this->actingAs(User::factory()->create())
+            ->get("/surat/surat_tugas/$id/pdf")
+            ->assertSessionHasErrors('pdf');
+
+        $pesan = session('errors')->first('pdf');
+
+        $this->assertStringContainsString('anon', $pesan);
+        $this->assertStringContainsString('SUPABASE_SERVICE_KEY', $pesan);
+    }
+
+    /** Kunci yang benar tidak boleh memancing peringatan yang salah. */
+    public function test_kunci_service_role_tidak_memunculkan_peringatan_kunci(): void
+    {
+        $this->denganSupabase();
+
+        config(['supabase.service_key' => 'header.' . rtrim(strtr(base64_encode('{"role":"service_role"}'), '+/', '-_'), '=') . '.tandatangan']);
+
+        Http::fake(['*' => Http::response(['statusCode' => '404', 'code' => 'NoSuchKey'], 400)]);
+
+        $id = $this->buatSuratTugas(['pdf_url' => 'ST-13.pdf']);
+
+        $this->actingAs(User::factory()->create())->get("/surat/surat_tugas/$id/pdf");
+
+        $this->assertStringNotContainsString('SUPABASE_SERVICE_KEY', session('errors')->first('pdf'));
     }
 
     /** Baris lama boleh saja menyimpan URL utuh alih-alih nama objek. */
