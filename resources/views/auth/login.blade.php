@@ -9,8 +9,9 @@
 <body class="flex min-h-screen items-center justify-center bg-latar px-4 text-tinta antialiased">
 
 <main class="w-full max-w-sm">
-    <h1 class="mb-1 text-center text-lg font-semibold text-pine">{{ config('app.name') }}</h1>
-    <p class="mb-6 text-center text-sm text-redup">Masuk dengan akun yang diberikan staf TAS.</p>
+    <img src="{{ asset('images/logo-smkn1amuntai.png') }}" alt="Logo" class="mx-auto mb-4 h-24">
+    <h1 class="mb-4 text-center text-lg font-semibold text-pine">{{ config('app.name') }} <br>SMK Negeri 1 Amuntai</h1>
+    {{-- <p class="mb-6 text-center text-sm text-redup">Masuk dengan akun yang diberikan staf TAS.</p> --}}
 
     <form method="POST" action="{{ route('login') }}"
           class="space-y-4 rounded-xl border border-garis bg-permukaan p-6 shadow-sm">
@@ -46,10 +47,6 @@
             Masuk
         </button>
     </form>
-
-    <p class="mt-4 text-center text-xs text-redup">
-        Tidak ada pendaftaran mandiri. Hubungi staf TAS untuk pembuatan akun.
-    </p>
 </main>
 
 </body>

@@ -59,7 +59,7 @@
     </div>
 
     @if (! $galat && $jumlah === 0)
-        <p class="rounded-xl border border-garis bg-permukaan px-4 py-10 text-center text-redup">
+        <p class="rounded-xl border border-garis bg-permukaan px-4 py-10 text-center text-redup mb-5">
             Belum ada permintaan yang perlu diproses.
         </p>
     @endif
