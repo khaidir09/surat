@@ -34,6 +34,7 @@ class PutuskanTest extends TestCase
 
         Http::assertSent(fn (Request $r) => $r->data() === [
             'id' => 12, 'jenis' => 'surat_tugas', 'aksi' => 'setujui', 'nomor' => '68',
+            'tanggal' => null,
         ]);
 
         $this->assertDatabaseHas('aktivitas', [
@@ -55,6 +56,63 @@ class PutuskanTest extends TestCase
             && $r->data()['nomor'] === null);
 
         $this->assertDatabaseHas('aktivitas', ['aksi' => 'tolak', 'subjek_id' => 3]);
+    }
+
+    public function test_tanggal_surat_diteruskan_ke_n8n(): void
+    {
+        Http::fake(['*' => Http::response(['ok' => true])]);
+
+        $this->post('/antrean/surat_tugas/12/putuskan', [
+            'aksi' => 'setujui', 'nomor' => '68', 'tanggal' => '2026-03-04',
+        ])->assertRedirect(route('antrean.index'));
+
+        Http::assertSent(fn (Request $r) => $r->data()['tanggal'] === '2026-03-04');
+
+        $this->assertDatabaseHas('aktivitas', ['aksi' => 'setujui', 'subjek_id' => 12]);
+    }
+
+    /**
+     * Kosong tetap sah: n8n yang memutuskan artinya (tanggal hari ini),
+     * sama seperti dashboard lama yang mengirim null saat prompt dilewati.
+     */
+    public function test_tanggal_boleh_kosong(): void
+    {
+        Http::fake(['*' => Http::response(['ok' => true])]);
+
+        $this->post('/antrean/surat_tugas/12/putuskan', [
+            'aksi' => 'setujui', 'nomor' => '68', 'tanggal' => '',
+        ])->assertRedirect(route('antrean.index'));
+
+        Http::assertSent(fn (Request $r) => $r->data()['tanggal'] === null);
+    }
+
+    /**
+     * Format lain akan dirakit n8n menjadi Invalid Date tanpa keluhan,
+     * sehingga surat terbit dengan tanggal kosong. Ditahan di sini.
+     */
+    public function test_tanggal_format_lain_ditolak_sebelum_menyentuh_n8n(): void
+    {
+        Http::fake();
+
+        $this->post('/antrean/surat_tugas/12/putuskan', [
+            'aksi' => 'setujui', 'nomor' => '68', 'tanggal' => '04-03-2026',
+        ])->assertSessionHasErrors('tanggal');
+
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('aktivitas', 0);
+    }
+
+    public function test_menolak_tidak_terpengaruh_tanggal(): void
+    {
+        Http::fake(['*' => Http::response(['ok' => true])]);
+
+        // Isian tanggal ikut terkirim oleh tombol Tolak karena berada dalam
+        // form yang sama; aturan exclude_unless membuangnya.
+        $this->post('/antrean/keterangan_aktif/3/putuskan', [
+            'aksi' => 'tolak', 'tanggal' => 'bukan-tanggal',
+        ])->assertRedirect(route('antrean.index'));
+
+        Http::assertSent(fn (Request $r) => $r->data()['tanggal'] === null);
     }
 
     /**
@@ -136,6 +194,21 @@ class PutuskanTest extends TestCase
 
         Http::assertSentCount(1);
         $this->assertDatabaseHas('aktivitas', ['aksi' => 'setujui', 'subjek_id' => 12]);
+    }
+
+    public function test_konfirmasi_duplikat_membawa_tanggal_yang_diketik(): void
+    {
+        Http::fake(['*' => Http::response(['ok' => true])]);
+
+        $this->buatSuratTugas(['no_surat' => '800.1.11.1/68-SMKN.1-AT/2026', 'created_at' => now()]);
+
+        // Tanggal harus ikut kembali ke layar konfirmasi; bila hilang, staf
+        // melanjutkan dan suratnya diam-diam bertanggal hari ini.
+        $this->post('/antrean/surat_tugas/12/putuskan', [
+            'aksi' => 'setujui', 'nomor' => '68', 'tanggal' => '2026-03-04',
+        ])->assertSessionHas('konfirmasi', fn (array $k) => $k['tanggal'] === '2026-03-04');
+
+        Http::assertNothingSent();
     }
 
     public function test_nomor_yang_belum_dipakai_langsung_diteruskan(): void

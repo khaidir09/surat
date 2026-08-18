@@ -42,11 +42,26 @@ class N8nClientTest extends TestCase
 
         $this->klien()->putuskan(12, 'keterangan_aktif', 'setujui', '67');
 
-        // Bentuk ini tidak boleh berubah: workflow n8n tidak disentuh (K6).
-        // Tidak ada field identitas pengguna, meski itu akan berguna.
+        // Bentuk ini mengikuti dashboard lama apa adanya (index.html:665-676),
+        // termasuk kunci tanggal yang tetap dikirim bernilai null. Tidak ada
+        // field identitas pengguna, meski itu akan berguna.
         Http::assertSent(fn (Request $r) => $r->url() === 'https://contoh.test/webhook/surat-keputusan'
             && $r->method() === 'POST'
-            && $r->data() === ['id' => 12, 'jenis' => 'keterangan_aktif', 'aksi' => 'setujui', 'nomor' => '67']);
+            && $r->data() === [
+                'id' => 12, 'jenis' => 'keterangan_aktif', 'aksi' => 'setujui',
+                'nomor' => '67', 'tanggal' => null,
+            ]);
+    }
+
+    public function test_tanggal_ikut_terkirim_apa_adanya(): void
+    {
+        Http::fake(['*' => Http::response(['ok' => true])]);
+
+        $this->klien()->putuskan(12, 'surat_tugas', 'setujui', '67', '2026-03-04');
+
+        // Diteruskan tanpa diformat ulang: n8n yang merakit
+        // new Date(tgl + 'T00:00:00'), jadi Y-m-d harus sampai utuh.
+        Http::assertSent(fn (Request $r) => $r->data()['tanggal'] === '2026-03-04');
     }
 
     public function test_payload_status_kepsek_sesuai_dashboard_lama(): void

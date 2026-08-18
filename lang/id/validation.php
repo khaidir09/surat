@@ -58,6 +58,9 @@ return [
             'required' => 'Nomor urut surat wajib diisi saat menyetujui.',
             'regex' => 'Nomor urut harus berupa angka saja, sesuai buku agenda.',
         ],
+        'tanggal' => [
+            'date_format' => 'Tanggal surat harus dalam format TTTT-BB-HH, misalnya 2026-08-18.',
+        ],
         'tanggal_selesai' => [
             'after_or_equal' => 'Tanggal selesai tidak boleh mendahului tanggal mulai.',
         ],
@@ -95,6 +98,7 @@ return [
         'role' => 'Role',
         'status' => 'Status',
         'tahun_masuk' => 'Tahun masuk',
+        'tanggal' => 'Tanggal surat',
         'tanggal_lahir' => 'Tanggal lahir',
         'tanggal_mulai' => 'Tanggal mulai',
         'tanggal_selesai' => 'Tanggal selesai',

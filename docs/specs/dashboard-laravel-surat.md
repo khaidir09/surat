@@ -234,7 +234,8 @@ POST /logout                         auth
 
 GET  /                               auth        → redirect sesuai role
 GET  /antrean                        role:tas    Antrean persetujuan (port index.html)
-POST /antrean/{jenis}/{id}/putuskan  role:tas    aksi=setujui|tolak, nomor wajib jika setujui
+POST /antrean/{jenis}/{id}/putuskan  role:tas    aksi=setujui|tolak, nomor wajib jika setujui,
+                                                tanggal (Y-m-d) opsional, kosong = hari ini di n8n
 POST /antrean/{jenis}/{id}/selesai   role:tas    tandai sudah ditandatangani
 GET  /antrean/{jenis}/{id}/pdf       auth        redirect ke URL dari n8n
 
@@ -268,7 +269,7 @@ Base: `https://n8n.dewakreatif.com/webhook`, dari `config/n8n.php` yang membaca 
 | Endpoint | Method | Payload | Dipakai oleh |
 |---|---|---|---|
 | `/surat-pending` | GET | — | `AntreanController@index` |
-| `/surat-keputusan` | POST | `{id, jenis, aksi, nomor}` | `AntreanController@putuskan` |
+| `/surat-keputusan` | POST | `{id, jenis, aksi, nomor, tanggal}` | `AntreanController@putuskan` |
 | `/surat-pdf?id=` | GET | — | `SuratPdfController` |
 | `/surat-selesai` | POST | `{id}` | `AntreanController@selesai` |
 | `/status-kepsek` | POST | `{status, estimasi, keterangan}` | `StatusKepsekController@store` |

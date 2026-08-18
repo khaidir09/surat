@@ -105,6 +105,21 @@
                        class="w-32 rounded-lg border border-garis px-3 py-2 text-sm focus:border-pine focus:outline-none">
             </div>
 
+            <div>
+                <label for="tanggal-{{ $awalan }}-{{ $id }}" class="mb-1 block text-xs font-medium text-redup">
+                    Tanggal surat
+                </label>
+
+                {{-- Terisi hari ini karena itulah yang benar hampir setiap
+                     kali; tetap dapat diubah untuk surat yang baru disetujui
+                     belakangan agar tanggalnya cocok dengan buku agenda.
+                     Nilainya dikirim apa adanya ke n8n, yang merakit
+                     new Date(tgl + 'T00:00:00'), jadi formatnya harus Y-m-d. --}}
+                <input id="tanggal-{{ $awalan }}-{{ $id }}" name="tanggal" type="date"
+                       value="{{ now()->toDateString() }}"
+                       class="w-44 rounded-lg border border-garis px-3 py-2 text-sm focus:border-pine focus:outline-none">
+            </div>
+
             <div class="flex flex-wrap gap-2">
                 <button type="submit" name="aksi" value="setujui"
                         class="rounded-lg bg-setuju px-4 py-2 text-sm font-medium text-white hover:opacity-90">

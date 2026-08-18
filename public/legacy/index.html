@@ -1,542 +1,567 @@
 <!doctype html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Persetujuan Surat — TAS</title>
-    <style>
-      :root {
-        --bg: #f4f6f3;
-        --surface: #ffffff;
-        --ink: #1b2620;
-        --muted: #5c6b63;
-        --line: #e1e6e0;
-        --pine: #16584a;
-        --pine-soft: #e7f0ec;
-        --approve: #1f7a43;
-        --reject: #b23a32;
-        --amber: #a9721a;
-        --info: #1f5f8b;
-        --ket: #6d3b8e;
-        --radius: 12px;
-        --shadow:
-          0 1px 2px rgba(27, 38, 32, 0.04), 0 6px 20px rgba(27, 38, 32, 0.05);
-      }
-      * {
-        box-sizing: border-box;
-      }
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-      }
-      body {
-        background: var(--bg);
-        color: var(--ink);
-        font-family:
-          system-ui,
-          -apple-system,
-          "Segoe UI",
-          Roboto,
-          sans-serif;
-        line-height: 1.5;
-        -webkit-font-smoothing: antialiased;
-      }
-      .wordmark {
-        font-family: Georgia, "Times New Roman", serif;
-        letter-spacing: 0.01em;
-      }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Persetujuan Surat — TAS</title>
+        <style>
+            :root {
+                --bg: #f4f6f3;
+                --surface: #ffffff;
+                --ink: #1b2620;
+                --muted: #5c6b63;
+                --line: #e1e6e0;
+                --pine: #16584a;
+                --pine-soft: #e7f0ec;
+                --approve: #1f7a43;
+                --reject: #b23a32;
+                --amber: #a9721a;
+                --info: #1f5f8b;
+                --ket: #6d3b8e;
+                --radius: 12px;
+                --shadow:
+                    0 1px 2px rgba(27, 38, 32, 0.04),
+                    0 6px 20px rgba(27, 38, 32, 0.05);
+            }
+            * {
+                box-sizing: border-box;
+            }
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                background: var(--bg);
+                color: var(--ink);
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    "Segoe UI",
+                    Roboto,
+                    sans-serif;
+                line-height: 1.5;
+                -webkit-font-smoothing: antialiased;
+            }
+            .wordmark {
+                font-family: Georgia, "Times New Roman", serif;
+                letter-spacing: 0.01em;
+            }
 
-      .gate {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 24px;
-      }
-      .gate-card {
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        padding: 32px 28px;
-        width: 100%;
-        max-width: 380px;
-        text-align: center;
-      }
-      .gate-card h1 {
-        font-size: 20px;
-        margin: 0 0 4px;
-      }
-      .gate-card p {
-        color: var(--muted);
-        font-size: 14px;
-        margin: 0 0 20px;
-      }
-      .field {
-        text-align: left;
-        margin-bottom: 16px;
-      }
-      .field label {
-        display: block;
-        font-size: 13px;
-        color: var(--muted);
-        margin-bottom: 6px;
-      }
-      input[type="password"] {
-        width: 100%;
-        padding: 11px 12px;
-        font-size: 15px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: #fff;
-        color: var(--ink);
-      }
-      input[type="password"]:focus {
-        outline: 2px solid var(--pine);
-        outline-offset: 1px;
-        border-color: var(--pine);
-      }
-      button {
-        font: inherit;
-        cursor: pointer;
-        border: none;
-        border-radius: 8px;
-      }
-      .btn-primary {
-        width: 100%;
-        background: var(--pine);
-        color: #fff;
-        padding: 11px 14px;
-        font-size: 15px;
-        font-weight: 500;
-      }
-      .btn-primary:hover {
-        filter: brightness(1.06);
-      }
-      .gate-error {
-        color: var(--reject);
-        font-size: 13px;
-        min-height: 18px;
-        margin-top: 10px;
-      }
+            .gate {
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+            }
+            .gate-card {
+                background: var(--surface);
+                border: 1px solid var(--line);
+                border-radius: var(--radius);
+                box-shadow: var(--shadow);
+                padding: 32px 28px;
+                width: 100%;
+                max-width: 380px;
+                text-align: center;
+            }
+            .gate-card h1 {
+                font-size: 20px;
+                margin: 0 0 4px;
+            }
+            .gate-card p {
+                color: var(--muted);
+                font-size: 14px;
+                margin: 0 0 20px;
+            }
+            .field {
+                text-align: left;
+                margin-bottom: 16px;
+            }
+            .field label {
+                display: block;
+                font-size: 13px;
+                color: var(--muted);
+                margin-bottom: 6px;
+            }
+            input[type="password"] {
+                width: 100%;
+                padding: 11px 12px;
+                font-size: 15px;
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: #fff;
+                color: var(--ink);
+            }
+            input[type="password"]:focus {
+                outline: 2px solid var(--pine);
+                outline-offset: 1px;
+                border-color: var(--pine);
+            }
+            button {
+                font: inherit;
+                cursor: pointer;
+                border: none;
+                border-radius: 8px;
+            }
+            .btn-primary {
+                width: 100%;
+                background: var(--pine);
+                color: #fff;
+                padding: 11px 14px;
+                font-size: 15px;
+                font-weight: 500;
+            }
+            .btn-primary:hover {
+                filter: brightness(1.06);
+            }
+            .gate-error {
+                color: var(--reject);
+                font-size: 13px;
+                min-height: 18px;
+                margin-top: 10px;
+            }
 
-      .app {
-        display: none;
-        max-width: 760px;
-        margin: 0 auto;
-        padding: 20px 16px 64px;
-      }
-      header.bar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 8px 2px 18px;
-        border-bottom: 1px solid var(--line);
-        margin-bottom: 8px;
-      }
-      .bar-title {
-        font-size: 19px;
-      }
-      .bar-title small {
-        display: block;
-        font-family: system-ui, sans-serif;
-        font-size: 12.5px;
-        color: var(--muted);
-        letter-spacing: normal;
-        font-weight: normal;
-        margin-top: 2px;
-      }
-      .btn-ghost {
-        background: transparent;
-        color: var(--muted);
-        border: 1px solid var(--line);
-        padding: 7px 12px;
-        font-size: 13px;
-      }
-      .btn-ghost:hover {
-        color: var(--ink);
-        border-color: var(--muted);
-      }
+            .app {
+                display: none;
+                max-width: 760px;
+                margin: 0 auto;
+                padding: 20px 16px 64px;
+            }
+            header.bar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 8px 2px 18px;
+                border-bottom: 1px solid var(--line);
+                margin-bottom: 8px;
+            }
+            .bar-title {
+                font-size: 19px;
+            }
+            .bar-title small {
+                display: block;
+                font-family: system-ui, sans-serif;
+                font-size: 12.5px;
+                color: var(--muted);
+                letter-spacing: normal;
+                font-weight: normal;
+                margin-top: 2px;
+            }
+            .btn-ghost {
+                background: transparent;
+                color: var(--muted);
+                border: 1px solid var(--line);
+                padding: 7px 12px;
+                font-size: 13px;
+            }
+            .btn-ghost:hover {
+                color: var(--ink);
+                border-color: var(--muted);
+            }
 
-      .section-head {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 26px 2px 12px;
-      }
-      .section-head h2 {
-        font-size: 15px;
-        margin: 0;
-        font-weight: 600;
-      }
-      .pill {
-        font-size: 12px;
-        font-weight: 600;
-        padding: 3px 10px;
-        border-radius: 999px;
-      }
-      .pill.amber {
-        background: #f6eedd;
-        color: var(--amber);
-      }
-      .pill.info {
-        background: #e6eef4;
-        color: var(--info);
-      }
-      .pill.ket {
-        background: #efe6f4;
-        color: var(--ket);
-      }
+            .section-head {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin: 26px 2px 12px;
+            }
+            .section-head h2 {
+                font-size: 15px;
+                margin: 0;
+                font-weight: 600;
+            }
+            .pill {
+                font-size: 12px;
+                font-weight: 600;
+                padding: 3px 10px;
+                border-radius: 999px;
+            }
+            .pill.amber {
+                background: #f6eedd;
+                color: var(--amber);
+            }
+            .pill.info {
+                background: #e6eef4;
+                color: var(--info);
+            }
+            .pill.ket {
+                background: #efe6f4;
+                color: var(--ket);
+            }
 
-      .card {
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-left: 4px solid var(--amber);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        padding: 16px 18px;
-        margin-bottom: 14px;
-      }
-      .card.ttd {
-        border-left-color: var(--info);
-      }
-      .card.ket {
-        border-left-color: var(--ket);
-      }
-      .card-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 12px;
-        margin-bottom: 10px;
-      }
-      .id-chip {
-        font-family: ui-monospace, "SF Mono", Menlo, monospace;
-        font-size: 12px;
-        color: var(--muted);
-      }
-      .waktu {
-        font-size: 12px;
-        color: var(--muted);
-        white-space: nowrap;
-      }
-      .petugas {
-        margin: 0 0 10px;
-      }
-      .petugas .p-row {
-        font-size: 15px;
-        font-weight: 500;
-      }
-      .petugas .p-jab {
-        font-size: 13px;
-        color: var(--muted);
-        font-weight: normal;
-      }
-      .siswa-nama {
-        font-size: 15px;
-        font-weight: 500;
-        margin-bottom: 8px;
-      }
-      dl.meta {
-        display: grid;
-        grid-template-columns: 92px 1fr;
-        gap: 4px 12px;
-        margin: 0 0 14px;
-        font-size: 14px;
-      }
-      dl.meta dt {
-        color: var(--muted);
-      }
-      dl.meta dd {
-        margin: 0;
-      }
-      .actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
-      .btn-approve {
-        background: var(--approve);
-        color: #fff;
-        padding: 9px 16px;
-        font-size: 14px;
-        font-weight: 500;
-        flex: 1;
-        min-width: 130px;
-      }
-      .btn-reject {
-        background: #fff;
-        color: var(--reject);
-        border: 1px solid var(--reject);
-        padding: 9px 16px;
-        font-size: 14px;
-        font-weight: 500;
-        flex: 1;
-        min-width: 90px;
-      }
-      .btn-secondary {
-        background: #fff;
-        color: var(--info);
-        border: 1px solid var(--info);
-        padding: 9px 16px;
-        font-size: 14px;
-        font-weight: 500;
-        flex: 1;
-        min-width: 120px;
-      }
-      .btn-approve:hover {
-        filter: brightness(1.06);
-      }
-      .btn-reject:hover {
-        background: var(--reject);
-        color: #fff;
-      }
-      .btn-secondary:hover {
-        background: var(--info);
-        color: #fff;
-      }
-      .card.busy {
-        opacity: 0.55;
-        pointer-events: none;
-      }
+            .card {
+                background: var(--surface);
+                border: 1px solid var(--line);
+                border-left: 4px solid var(--amber);
+                border-radius: var(--radius);
+                box-shadow: var(--shadow);
+                padding: 16px 18px;
+                margin-bottom: 14px;
+            }
+            .card.ttd {
+                border-left-color: var(--info);
+            }
+            .card.ket {
+                border-left-color: var(--ket);
+            }
+            .card-top {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 12px;
+                margin-bottom: 10px;
+            }
+            .id-chip {
+                font-family: ui-monospace, "SF Mono", Menlo, monospace;
+                font-size: 12px;
+                color: var(--muted);
+            }
+            .waktu {
+                font-size: 12px;
+                color: var(--muted);
+                white-space: nowrap;
+            }
+            .petugas {
+                margin: 0 0 10px;
+            }
+            .petugas .p-row {
+                font-size: 15px;
+                font-weight: 500;
+            }
+            .petugas .p-jab {
+                font-size: 13px;
+                color: var(--muted);
+                font-weight: normal;
+            }
+            .siswa-nama {
+                font-size: 15px;
+                font-weight: 500;
+                margin-bottom: 8px;
+            }
+            dl.meta {
+                display: grid;
+                grid-template-columns: 92px 1fr;
+                gap: 4px 12px;
+                margin: 0 0 14px;
+                font-size: 14px;
+            }
+            dl.meta dt {
+                color: var(--muted);
+            }
+            dl.meta dd {
+                margin: 0;
+            }
+            .actions {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+            .btn-approve {
+                background: var(--approve);
+                color: #fff;
+                padding: 9px 16px;
+                font-size: 14px;
+                font-weight: 500;
+                flex: 1;
+                min-width: 130px;
+            }
+            .btn-reject {
+                background: #fff;
+                color: var(--reject);
+                border: 1px solid var(--reject);
+                padding: 9px 16px;
+                font-size: 14px;
+                font-weight: 500;
+                flex: 1;
+                min-width: 90px;
+            }
+            .btn-secondary {
+                background: #fff;
+                color: var(--info);
+                border: 1px solid var(--info);
+                padding: 9px 16px;
+                font-size: 14px;
+                font-weight: 500;
+                flex: 1;
+                min-width: 120px;
+            }
+            .btn-approve:hover {
+                filter: brightness(1.06);
+            }
+            .btn-reject:hover {
+                background: var(--reject);
+                color: #fff;
+            }
+            .btn-secondary:hover {
+                background: var(--info);
+                color: #fff;
+            }
+            .card.busy {
+                opacity: 0.55;
+                pointer-events: none;
+            }
 
-      .state {
-        text-align: center;
-        color: var(--muted);
-        padding: 22px 20px;
-        font-size: 14px;
-        border: 1px dashed var(--line);
-        border-radius: var(--radius);
-      }
-      .state.big {
-        padding: 48px 20px;
-        font-size: 15px;
-      }
+            .state {
+                text-align: center;
+                color: var(--muted);
+                padding: 22px 20px;
+                font-size: 14px;
+                border: 1px dashed var(--line);
+                border-radius: var(--radius);
+            }
+            .state.big {
+                padding: 48px 20px;
+                font-size: 15px;
+            }
 
-      #toast {
-        position: fixed;
-        left: 50%;
-        bottom: 24px;
-        transform: translateX(-50%) translateY(20px);
-        background: var(--ink);
-        color: #fff;
-        padding: 11px 18px;
-        border-radius: 999px;
-        font-size: 14px;
-        opacity: 0;
-        transition:
-          opacity 0.2s,
-          transform 0.2s;
-        pointer-events: none;
-        z-index: 50;
-      }
-      #toast.show {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-      }
-      #toast.err {
-        background: var(--reject);
-      }
-      @media (prefers-reduced-motion: reduce) {
-        * {
-          transition: none !important;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="gate" id="gate">
-      <div class="gate-card">
-        <h1 class="wordmark">Persetujuan Surat</h1>
-        <p>Tata Administrasi Sekolah</p>
-        <div class="field">
-          <label for="pass">Kode akses</label>
-          <input
-            type="password"
-            id="pass"
-            autocomplete="current-password"
-            placeholder="Masukkan kode"
-          />
+            #toast {
+                position: fixed;
+                left: 50%;
+                bottom: 24px;
+                transform: translateX(-50%) translateY(20px);
+                background: var(--ink);
+                color: #fff;
+                padding: 11px 18px;
+                border-radius: 999px;
+                font-size: 14px;
+                opacity: 0;
+                transition:
+                    opacity 0.2s,
+                    transform 0.2s;
+                pointer-events: none;
+                z-index: 50;
+            }
+            #toast.show {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+            #toast.err {
+                background: var(--reject);
+            }
+            @media (prefers-reduced-motion: reduce) {
+                * {
+                    transition: none !important;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="gate" id="gate">
+            <div class="gate-card">
+                <h1 class="wordmark">Persetujuan Surat</h1>
+                <p>Tata Administrasi Sekolah</p>
+                <div class="field">
+                    <label for="pass">Kode akses</label>
+                    <input
+                        type="password"
+                        id="pass"
+                        autocomplete="current-password"
+                        placeholder="Masukkan kode"
+                    />
+                </div>
+                <button class="btn-primary" id="unlock">Masuk</button>
+                <div class="gate-error" id="gateError"></div>
+            </div>
         </div>
-        <button class="btn-primary" id="unlock">Masuk</button>
-        <div class="gate-error" id="gateError"></div>
-      </div>
-    </div>
 
-    <main class="app" id="app">
-      <header class="bar">
-        <div class="bar-title wordmark">
-          Antrean Surat
-          <small
-            >Tinjau dan proses permintaan surat tugas &amp; keterangan
-            aktif</small
-          >
-        </div>
-        <button class="btn-ghost" id="refresh">Muat ulang</button>
-      </header>
-      <div
-        id="panel-kepsek"
-        style="
-          background: var(--surface);
-          border: 1px solid var(--line);
-          border-left: 4px solid var(--pine);
-          border-radius: 12px;
-          padding: 14px 16px;
-          margin-bottom: 18px;
-        "
-      >
-        <div style="font-weight: 600; font-size: 14px; margin-bottom: 10px">
-          Status Kepala Sekolah
-        </div>
-        <div
-          style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"
-        >
-          <select
-            id="kStatus"
-            style="
-              padding: 8px 10px;
-              border: 1px solid var(--line);
-              border-radius: 8px;
-              font: inherit;
-            "
-          >
-            <option>Di sekolah</option>
-            <option>Dinas Luar</option>
-            <option>Rapat</option>
-            <option>Tidak di tempat</option>
-            <option>Cuti</option>
-          </select>
-          <input
-            id="kEstimasi"
-            placeholder="Kembali pukul (opsional)"
-            style="
-              padding: 8px 10px;
-              border: 1px solid var(--line);
-              border-radius: 8px;
-              font: inherit;
-              flex: 1;
-              min-width: 150px;
-            "
-          />
-          <input
-            id="kKeterangan"
-            placeholder="Keterangan (opsional)"
-            style="
-              padding: 8px 10px;
-              border: 1px solid var(--line);
-              border-radius: 8px;
-              font: inherit;
-              flex: 2;
-              min-width: 150px;
-            "
-          />
-          <button
-            class="btn-approve"
-            style="flex: 0 0 auto; min-width: auto"
-            onclick="simpanStatusKepsek(this)"
-          >
-            Simpan
-          </button>
-        </div>
-      </div>
-      <div id="body"></div>
-    </main>
+        <main class="app" id="app">
+            <header class="bar">
+                <div class="bar-title wordmark">
+                    Antrean Surat
+                    <small
+                        >Tinjau dan proses permintaan surat tugas &amp;
+                        keterangan aktif</small
+                    >
+                </div>
+                <button class="btn-ghost" id="refresh">Muat ulang</button>
+            </header>
+            <div
+                id="panel-kepsek"
+                style="
+                    background: var(--surface);
+                    border: 1px solid var(--line);
+                    border-left: 4px solid var(--pine);
+                    border-radius: 12px;
+                    padding: 14px 16px;
+                    margin-bottom: 18px;
+                "
+            >
+                <div
+                    style="
+                        font-weight: 600;
+                        font-size: 14px;
+                        margin-bottom: 10px;
+                    "
+                >
+                    Status Kepala Sekolah
+                </div>
+                <div
+                    style="
+                        display: flex;
+                        gap: 8px;
+                        flex-wrap: wrap;
+                        align-items: center;
+                    "
+                >
+                    <select
+                        id="kStatus"
+                        style="
+                            padding: 8px 10px;
+                            border: 1px solid var(--line);
+                            border-radius: 8px;
+                            font: inherit;
+                        "
+                    >
+                        <option>Di sekolah</option>
+                        <option>Dinas Luar</option>
+                        <option>Rapat</option>
+                        <option>Tidak di tempat</option>
+                        <option>Cuti</option>
+                    </select>
+                    <input
+                        id="kEstimasi"
+                        placeholder="Kembali pukul (opsional)"
+                        style="
+                            padding: 8px 10px;
+                            border: 1px solid var(--line);
+                            border-radius: 8px;
+                            font: inherit;
+                            flex: 1;
+                            min-width: 150px;
+                        "
+                    />
+                    <input
+                        id="kKeterangan"
+                        placeholder="Keterangan (opsional)"
+                        style="
+                            padding: 8px 10px;
+                            border: 1px solid var(--line);
+                            border-radius: 8px;
+                            font: inherit;
+                            flex: 2;
+                            min-width: 150px;
+                        "
+                    />
+                    <button
+                        class="btn-approve"
+                        style="flex: 0 0 auto; min-width: auto"
+                        onclick="simpanStatusKepsek(this)"
+                    >
+                        Simpan
+                    </button>
+                </div>
+            </div>
+            <div id="body"></div>
+        </main>
 
-    <div id="toast"></div>
+        <div id="toast"></div>
 
-    <script>
-      // ====== KONFIGURASI ======
-      const N8N_BASE = "https://n8n.dewakreatif.com/webhook";
-      const EP_LIST = N8N_BASE + "/surat-pending";
-      const EP_DECISION = N8N_BASE + "/surat-keputusan";
-      const EP_PDF = N8N_BASE + "/surat-pdf";
-      const EP_DONE = N8N_BASE + "/surat-selesai";
-      const AUTO_REFRESH_MS = 30000;
-      // =========================
+        <script>
+            // ====== KONFIGURASI ======
+            const N8N_BASE = "https://n8n.dewakreatif.com/webhook";
+            const EP_LIST = N8N_BASE + "/surat-pending";
+            const EP_DECISION = N8N_BASE + "/surat-keputusan";
+            const EP_PDF = N8N_BASE + "/surat-pdf";
+            const EP_DONE = N8N_BASE + "/surat-selesai";
+            const AUTO_REFRESH_MS = 30000;
+            // =========================
 
-      let secret = "",
-        timer = null;
-      const $ = (id) => document.getElementById(id);
-      const bulan = [
-        "Januari",
-        "Februari",
-        "Maret",
-        "April",
-        "Mei",
-        "Juni",
-        "Juli",
-        "Agustus",
-        "September",
-        "Oktober",
-        "November",
-        "Desember",
-      ];
-      const fmtTgl = (s) => {
-        if (!s) return "-";
-        const d = new Date(s);
-        return isNaN(d)
-          ? s
-          : d.getDate() + " " + bulan[d.getMonth()] + " " + d.getFullYear();
-      };
-      const rentang = (a, b) =>
-        !b || a === b ? fmtTgl(a) : fmtTgl(a) + " s.d " + fmtTgl(b);
-      function sejak(s) {
-        if (!s) return "";
-        const m = Math.round((Date.now() - new Date(s)) / 60000);
-        if (m < 1) return "baru saja";
-        if (m < 60) return m + " menit lalu";
-        const j = Math.round(m / 60);
-        return j < 24 ? j + " jam lalu" : Math.round(j / 24) + " hari lalu";
-      }
-      function toast(msg, isErr) {
-        const t = $("toast");
-        t.textContent = msg;
-        t.className = "show" + (isErr ? " err" : "");
-        setTimeout(() => {
-          t.className = "";
-        }, 2600);
-      }
-      const esc = (x) =>
-        String(x ?? "").replace(
-          /[&<>"]/g,
-          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-        );
+            let secret = "",
+                timer = null;
+            const $ = (id) => document.getElementById(id);
+            const bulan = [
+                "Januari",
+                "Februari",
+                "Maret",
+                "April",
+                "Mei",
+                "Juni",
+                "Juli",
+                "Agustus",
+                "September",
+                "Oktober",
+                "November",
+                "Desember",
+            ];
+            const fmtTgl = (s) => {
+                if (!s) return "-";
+                const d = new Date(s);
+                return isNaN(d)
+                    ? s
+                    : d.getDate() +
+                          " " +
+                          bulan[d.getMonth()] +
+                          " " +
+                          d.getFullYear();
+            };
+            const rentang = (a, b) =>
+                !b || a === b ? fmtTgl(a) : fmtTgl(a) + " s.d " + fmtTgl(b);
+            function sejak(s) {
+                if (!s) return "";
+                const m = Math.round((Date.now() - new Date(s)) / 60000);
+                if (m < 1) return "baru saja";
+                if (m < 60) return m + " menit lalu";
+                const j = Math.round(m / 60);
+                return j < 24
+                    ? j + " jam lalu"
+                    : Math.round(j / 24) + " hari lalu";
+            }
+            function toast(msg, isErr) {
+                const t = $("toast");
+                t.textContent = msg;
+                t.className = "show" + (isErr ? " err" : "");
+                setTimeout(() => {
+                    t.className = "";
+                }, 2600);
+            }
+            const esc = (x) =>
+                String(x ?? "").replace(
+                    /[&<>"]/g,
+                    (c) =>
+                        ({
+                            "&": "&amp;",
+                            "<": "&lt;",
+                            ">": "&gt;",
+                            '"': "&quot;",
+                        })[c],
+                );
 
-      async function muatDaftar() {
-        $("body").innerHTML = '<div class="state big">Memuat permintaan…</div>';
-        try {
-          const res = await fetch(EP_LIST, {
-            headers: { "x-dashboard-secret": secret },
-          });
-          if (res.status === 401) {
-            kunciUlang("Kode akses salah.");
-            return;
-          }
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          const data = await res.json();
-          render(Array.isArray(data) ? data : data.items || []);
-        } catch (e) {
-          $("body").innerHTML =
-            '<div class="state big">Gagal memuat. Periksa koneksi, lalu muat ulang.</div>';
-        }
-      }
+            async function muatDaftar() {
+                $("body").innerHTML =
+                    '<div class="state big">Memuat permintaan…</div>';
+                try {
+                    const res = await fetch(EP_LIST, {
+                        headers: { "x-dashboard-secret": secret },
+                    });
+                    if (res.status === 401) {
+                        kunciUlang("Kode akses salah.");
+                        return;
+                    }
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    const data = await res.json();
+                    render(Array.isArray(data) ? data : data.items || []);
+                } catch (e) {
+                    $("body").innerHTML =
+                        '<div class="state big">Gagal memuat. Periksa koneksi, lalu muat ulang.</div>';
+                }
+            }
 
-      function kartuTugas(s) {
-        const petugas = (s.petugas || [])
-          .map(
-            (p) =>
-              `<div class="p-row">${esc(p.nama)} <span class="p-jab">— ${esc(p.jabatan || "")}</span></div>`,
-          )
-          .join("");
-        const ttd = s.status === "menunggu_ttd";
-        const aksi = ttd
-          ? `<button class="btn-secondary" onclick="unduhPdf(${esc(s.id)}, this)">Unduh PDF</button>
+            function kartuTugas(s) {
+                const petugas = (s.petugas || [])
+                    .map(
+                        (p) =>
+                            `<div class="p-row">${esc(p.nama)} <span class="p-jab">— ${esc(p.jabatan || "")}</span></div>`,
+                    )
+                    .join("");
+                const ttd = s.status === "menunggu_ttd";
+                const aksi = ttd
+                    ? `<button class="btn-secondary" onclick="unduhPdf(${esc(s.id)}, this)">Unduh PDF</button>
          <button class="btn-approve" onclick="tandaiSelesai(${esc(s.id)}, this)">Sudah ditandatangani</button>`
-          : `<button class="btn-approve" onclick="putuskan(${esc(s.id)}, 'surat_tugas', 'setujui', this)">Setujui &amp; terbitkan</button>
+                    : `<button class="btn-approve" onclick="putuskan(${esc(s.id)}, 'surat_tugas', 'setujui', this)">Setujui &amp; terbitkan</button>
          <button class="btn-reject" onclick="putuskan(${esc(s.id)}, 'surat_tugas', 'tolak', this)">Tolak</button>`;
-        return `<article class="card ${ttd ? "ttd" : ""}" data-id="${esc(s.id)}">
+                return `<article class="card ${ttd ? "ttd" : ""}" data-id="${esc(s.id)}">
       <div class="card-top"><span class="id-chip">#ST-${esc(s.id)}</span><span class="waktu">${esc(sejak(s.created_at))}</span></div>
       <div class="petugas">${petugas}</div>
       <dl class="meta">
@@ -545,10 +570,10 @@
         <dt>Tanggal</dt><dd>${esc(rentang(s.tanggal_mulai, s.tanggal_selesai))}</dd>
       </dl>
       <div class="actions">${aksi}</div></article>`;
-      }
+            }
 
-      function kartuKeterangan(s) {
-        return `<article class="card ket" data-id="${esc(s.id)}">
+            function kartuKeterangan(s) {
+                return `<article class="card ket" data-id="${esc(s.id)}">
       <div class="card-top"><span class="id-chip">#SK-${esc(s.id)}</span><span class="waktu">${esc(sejak(s.created_at))}</span></div>
       <div class="siswa-nama">${esc(s.nama_siswa)}</div>
       <dl class="meta">
@@ -559,190 +584,217 @@
         <button class="btn-approve" onclick="putuskan(${esc(s.id)}, 'keterangan_aktif', 'setujui', this)">Setujui &amp; terbitkan</button>
         <button class="btn-reject" onclick="putuskan(${esc(s.id)}, 'keterangan_aktif', 'tolak', this)">Tolak</button>
       </div></article>`;
-      }
+            }
 
-      function seksi(judul, pillClass, arr, render) {
-        return (
-          `<div class="section-head"><h2>${judul}</h2><span class="pill ${pillClass}">${arr.length}</span></div>` +
-          (arr.length
-            ? arr.map(render).join("")
-            : '<div class="state">Tidak ada.</div>')
-        );
-      }
+            function seksi(judul, pillClass, arr, render) {
+                return (
+                    `<div class="section-head"><h2>${judul}</h2><span class="pill ${pillClass}">${arr.length}</span></div>` +
+                    (arr.length
+                        ? arr.map(render).join("")
+                        : '<div class="state">Tidak ada.</div>')
+                );
+            }
 
-      function render(items) {
-        const tMenunggu = items.filter(
-          (s) => s.jenis === "surat_tugas" && s.status === "menunggu",
-        );
-        const tTtd = items.filter(
-          (s) => s.jenis === "surat_tugas" && s.status === "menunggu_ttd",
-        );
-        const kMenunggu = items.filter(
-          (s) => s.jenis === "keterangan_aktif" && s.status === "menunggu",
-        );
-        if (!items.length) {
-          $("body").innerHTML =
-            '<div class="state big">Belum ada permintaan yang perlu diproses.</div>';
-          return;
-        }
-        $("body").innerHTML =
-          seksi(
-            "Surat Tugas — Menunggu Persetujuan",
-            "amber",
-            tMenunggu,
-            kartuTugas,
-          ) +
-          seksi("Surat Tugas — Menunggu TTD Kepsek", "info", tTtd, kartuTugas) +
-          seksi(
-            "Surat Keterangan — Menunggu Persetujuan",
-            "ket",
-            kMenunggu,
-            kartuKeterangan,
-          );
-      }
+            function render(items) {
+                const tMenunggu = items.filter(
+                    (s) => s.jenis === "surat_tugas" && s.status === "menunggu",
+                );
+                const tTtd = items.filter(
+                    (s) =>
+                        s.jenis === "surat_tugas" &&
+                        s.status === "menunggu_ttd",
+                );
+                const kMenunggu = items.filter(
+                    (s) =>
+                        s.jenis === "keterangan_aktif" &&
+                        s.status === "menunggu",
+                );
+                if (!items.length) {
+                    $("body").innerHTML =
+                        '<div class="state big">Belum ada permintaan yang perlu diproses.</div>';
+                    return;
+                }
+                $("body").innerHTML =
+                    seksi(
+                        "Surat Tugas — Menunggu Persetujuan",
+                        "amber",
+                        tMenunggu,
+                        kartuTugas,
+                    ) +
+                    seksi(
+                        "Surat Tugas — Menunggu TTD Kepsek",
+                        "info",
+                        tTtd,
+                        kartuTugas,
+                    ) +
+                    seksi(
+                        "Surat Keterangan — Menunggu Persetujuan",
+                        "ket",
+                        kMenunggu,
+                        kartuKeterangan,
+                    );
+            }
 
-      async function putuskan(id, jenis, aksi, btn) {
-        let nomor = null;
-        if (aksi === "setujui") {
-          nomor = prompt(
-            "Masukkan nomor urut surat (angka saja, sesuai buku agenda):",
-          );
-          if (nomor === null) return;
-          nomor = nomor.trim();
-          if (!/^\d+$/.test(nomor)) {
-            toast("Nomor urut harus berupa angka.", true);
-            return;
-          }
-        }
-        btn.closest(".card").classList.add("busy");
-        try {
-          const res = await fetch(EP_DECISION, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-dashboard-secret": secret,
-            },
-            body: JSON.stringify({ id, jenis, aksi, nomor }),
-          });
-          if (res.status === 401) {
-            kunciUlang("Kode akses salah.");
-            return;
-          }
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          toast(
-            aksi === "setujui"
-              ? "Disetujui — surat sedang diterbitkan"
-              : "Ditolak",
-          );
-          muatDaftar();
-        } catch (e) {
-          btn.closest(".card").classList.remove("busy");
-          toast("Gagal memproses. Coba lagi.", true);
-        }
-      }
+            async function putuskan(id, jenis, aksi, btn) {
+                let nomor = null;
+                if (aksi === "setujui") {
+                    nomor = prompt(
+                        "Masukkan nomor urut surat (angka saja, sesuai buku agenda):",
+                    );
+                    if (nomor === null) return;
+                    nomor = nomor.trim();
+                    if (!/^\d+$/.test(nomor)) {
+                        toast("Nomor urut harus berupa angka.", true);
+                        return;
+                    }
+                }
+                let tanggal = null;
+                if (aksi === "setujui") {
+                    // ... bagian minta nomor yang sudah ada ...
+                    tanggal = prompt(
+                        "Tanggal surat (YYYY-MM-DD), kosongkan untuk hari ini:",
+                    );
+                    if (tanggal !== null) tanggal = tanggal.trim();
+                }
+                btn.closest(".card").classList.add("busy");
+                try {
+                    const res = await fetch(EP_DECISION, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-dashboard-secret": secret,
+                        },
+                        body: JSON.stringify({
+                            id,
+                            jenis,
+                            aksi,
+                            nomor,
+                            tanggal,
+                        }),
+                    });
+                    if (res.status === 401) {
+                        kunciUlang("Kode akses salah.");
+                        return;
+                    }
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    toast(
+                        aksi === "setujui"
+                            ? "Disetujui — surat sedang diterbitkan"
+                            : "Ditolak",
+                    );
+                    muatDaftar();
+                } catch (e) {
+                    btn.closest(".card").classList.remove("busy");
+                    toast("Gagal memproses. Coba lagi.", true);
+                }
+            }
 
-      async function tandaiSelesai(id, btn) {
-        btn.closest(".card").classList.add("busy");
-        try {
-          const res = await fetch(EP_DONE, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-dashboard-secret": secret,
-            },
-            body: JSON.stringify({ id }),
-          });
-          if (res.status === 401) {
-            kunciUlang("Kode akses salah.");
-            return;
-          }
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          toast("Ditandai selesai — pemohon diberi tahu");
-          muatDaftar();
-        } catch (e) {
-          btn.closest(".card").classList.remove("busy");
-          toast("Gagal memproses. Coba lagi.", true);
-        }
-      }
+            async function tandaiSelesai(id, btn) {
+                btn.closest(".card").classList.add("busy");
+                try {
+                    const res = await fetch(EP_DONE, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-dashboard-secret": secret,
+                        },
+                        body: JSON.stringify({ id }),
+                    });
+                    if (res.status === 401) {
+                        kunciUlang("Kode akses salah.");
+                        return;
+                    }
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    toast("Ditandai selesai — pemohon diberi tahu");
+                    muatDaftar();
+                } catch (e) {
+                    btn.closest(".card").classList.remove("busy");
+                    toast("Gagal memproses. Coba lagi.", true);
+                }
+            }
 
-      async function unduhPdf(id, btn) {
-        const label = btn.textContent;
-        btn.textContent = "Menyiapkan…";
-        btn.disabled = true;
-        try {
-          const res = await fetch(EP_PDF + "?id=" + id, {
-            headers: { "x-dashboard-secret": secret },
-          });
-          if (res.status === 401) {
-            kunciUlang("Kode akses salah.");
-            return;
-          }
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          const data = await res.json();
-          const item = Array.isArray(data) ? data[0] : data;
-          if (item && item.url) window.open(item.url, "_blank");
-          else toast("URL tidak tersedia.", true);
-        } catch (e) {
-          toast("Gagal menyiapkan PDF.", true);
-        } finally {
-          btn.textContent = label;
-          btn.disabled = false;
-        }
-      }
+            async function unduhPdf(id, btn) {
+                const label = btn.textContent;
+                btn.textContent = "Menyiapkan…";
+                btn.disabled = true;
+                try {
+                    const res = await fetch(EP_PDF + "?id=" + id, {
+                        headers: { "x-dashboard-secret": secret },
+                    });
+                    if (res.status === 401) {
+                        kunciUlang("Kode akses salah.");
+                        return;
+                    }
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    const data = await res.json();
+                    const item = Array.isArray(data) ? data[0] : data;
+                    if (item && item.url) window.open(item.url, "_blank");
+                    else toast("URL tidak tersedia.", true);
+                } catch (e) {
+                    toast("Gagal menyiapkan PDF.", true);
+                } finally {
+                    btn.textContent = label;
+                    btn.disabled = false;
+                }
+            }
 
-      function bukaApp() {
-        $("gate").style.display = "none";
-        $("app").style.display = "block";
-        muatDaftar();
-        if (AUTO_REFRESH_MS > 0)
-          timer = setInterval(muatDaftar, AUTO_REFRESH_MS);
-      }
-      function kunciUlang(pesan) {
-        if (timer) clearInterval(timer);
-        secret = "";
-        $("app").style.display = "none";
-        $("gate").style.display = "flex";
-        $("gateError").textContent = pesan || "";
-      }
-      $("unlock").onclick = () => {
-        const v = $("pass").value.trim();
-        if (!v) {
-          $("gateError").textContent = "Masukkan kode akses.";
-          return;
-        }
-        secret = v;
-        $("gateError").textContent = "";
-        bukaApp();
-      };
-      $("pass").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") $("unlock").click();
-      });
-      $("refresh").onclick = muatDaftar;
+            function bukaApp() {
+                $("gate").style.display = "none";
+                $("app").style.display = "block";
+                muatDaftar();
+                if (AUTO_REFRESH_MS > 0)
+                    timer = setInterval(muatDaftar, AUTO_REFRESH_MS);
+            }
+            function kunciUlang(pesan) {
+                if (timer) clearInterval(timer);
+                secret = "";
+                $("app").style.display = "none";
+                $("gate").style.display = "flex";
+                $("gateError").textContent = pesan || "";
+            }
+            $("unlock").onclick = () => {
+                const v = $("pass").value.trim();
+                if (!v) {
+                    $("gateError").textContent = "Masukkan kode akses.";
+                    return;
+                }
+                secret = v;
+                $("gateError").textContent = "";
+                bukaApp();
+            };
+            $("pass").addEventListener("keydown", (e) => {
+                if (e.key === "Enter") $("unlock").click();
+            });
+            $("refresh").onclick = muatDaftar;
 
-      const EP_STATUS = N8N_BASE + "/status-kepsek";
-      async function simpanStatusKepsek(btn) {
-        btn.disabled = true;
-        try {
-          const res = await fetch(EP_STATUS, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-dashboard-secret": secret,
-            },
-            body: JSON.stringify({
-              status: document.getElementById("kStatus").value,
-              estimasi: document.getElementById("kEstimasi").value.trim(),
-              keterangan: document.getElementById("kKeterangan").value.trim(),
-            }),
-          });
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          toast("Status kepsek diperbarui");
-        } catch (e) {
-          toast("Gagal menyimpan status.", true);
-        } finally {
-          btn.disabled = false;
-        }
-      }
-    </script>
-  </body>
+            const EP_STATUS = N8N_BASE + "/status-kepsek";
+            async function simpanStatusKepsek(btn) {
+                btn.disabled = true;
+                try {
+                    const res = await fetch(EP_STATUS, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-dashboard-secret": secret,
+                        },
+                        body: JSON.stringify({
+                            status: document.getElementById("kStatus").value,
+                            estimasi: document
+                                .getElementById("kEstimasi")
+                                .value.trim(),
+                            keterangan: document
+                                .getElementById("kKeterangan")
+                                .value.trim(),
+                        }),
+                    });
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    toast("Status kepsek diperbarui");
+                } catch (e) {
+                    toast("Gagal menyimpan status.", true);
+                } finally {
+                    btn.disabled = false;
+                }
+            }
+        </script>
+    </body>
 </html>
