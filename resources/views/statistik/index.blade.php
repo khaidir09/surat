@@ -46,9 +46,13 @@
             @if ($terbit === 0)
                 <p class="py-8 text-center text-sm text-redup">Belum ada surat yang terbit.</p>
             @else
-                {{-- Kanvas donat menyusul; angkanya sudah lengkap tanpa itu,
-                     dan tetap terbaca kalau JavaScript mati (E-S11). --}}
-                <div id="donat-komposisi" class="mb-3"></div>
+                {{-- Legenda di bawah sudah memuat seluruh angkanya, jadi
+                     kanvas ini murni tambahan bentuk: halaman tetap utuh
+                     kalau Chart.js gagal dimuat (E-S11). --}}
+                <div class="mb-3 h-40">
+                    <canvas id="donat-komposisi" role="img"
+                            aria-label="Komposisi surat terbit per jenis"></canvas>
+                </div>
 
                 <dl class="space-y-2 text-sm">
                     @foreach ($komposisi as $bagian)
@@ -99,8 +103,10 @@
     <section class="rounded-xl border border-garis bg-permukaan p-4">
         <h2 class="mb-3 text-sm font-medium">Tren Harian — {{ count($tren['tanggal']) }} hari terakhir</h2>
 
-        {{-- Kanvas garis menyusul pada langkah berikutnya. --}}
-        <div id="garis-tren"></div>
+        <div class="h-56">
+            <canvas id="garis-tren" role="img"
+                    aria-label="Tren permintaan surat harian"></canvas>
+        </div>
 
         <p class="mt-2 text-xs text-redup">
             {{ \Illuminate\Support\Carbon::parse($tren['tanggal'][0])->translatedFormat('j M Y') }}
@@ -124,4 +130,9 @@
          tidak ada urusan CSRF — dan angkanya dapat diperiksa langsung oleh
          feature test, yang tidak mungkin dilakukan terhadap kanvas. --}}
     <script type="application/json" id="data-statistik">@json($grafik)</script>
+
+    {{-- Hanya halaman ini yang memuat Chart.js (K-S5). --}}
+    @push('skrip')
+        @vite('resources/js/statistik.js')
+    @endpush
 @endsection

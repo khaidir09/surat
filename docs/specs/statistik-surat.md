@@ -152,6 +152,8 @@ Satu-satunya kolom yang disebut adalah `status`, dan satu-satunya nilai yang dic
 | **2** | Rata-rata Waktu Proses Surat Tugas | Kartu angka | `surat_tugas` | Rata-rata `approved_at − created_at`, ditampilkan dalam satuan yang terbaca manusia (E-S2, E-S9, E-S10) |
 | **3** | Total Permintaan Masuk | Kartu angka | Kedua tabel surat | Jumlah seluruh baris, tanpa penyaringan. Disandingkan dengan metrik 1 sehingga selisihnya terlihat |
 | **7** | Permintaan lewat Chatbot | Kartu angka | `log_permintaan` | Jumlah baris berstatus `diajukan` (K-S12). **Label bukan "Total Interaksi Bot"** — satu baris bukan satu interaksi, lihat R-S9 |
+
+**Metrik 6 tidak memakai kanvas.** §9 semula membayangkan tiga grafik, tetapi panel status sudah berupa batang HTML/CSS yang terbaca tanpa JavaScript. Menggantinya dengan kanvas Chart.js akan menghapus properti E-S11 yang sudah dimiliki, demi tampilan yang tidak lebih informatif. Kanvas hanya dipakai di tempat yang HTML polos memang tidak sanggup: donat dan garis.
 | **4** | Komposisi per Jenis | Grafik donat | Kedua tabel surat | Pecahan dari metrik 1: surat tugas vs surat keterangan (K-S4) |
 | **5** | Tren Harian | Grafik garis, 2 seri | Kedua tabel surat | Jumlah permintaan masuk per hari WITA, 30 hari terakhir termasuk hari ini |
 | **6** | Status Surat Saat Ini | Grafik batang + tabel | Kedua tabel surat | `count(*) group by status` dari kedua tabel digabung, seluruh nilai apa adanya (K-S2) |
@@ -196,9 +198,9 @@ Letak di sidebar: **di atas `Antrean`**, sebagai item pertama. Ia adalah ringkas
 | Path | Isi |
 |---|---|
 | `app/Http/Controllers/StatistikController.php` | ✅ Satu method `index()` dan method privat agregasi (K-S8) |
-| `resources/views/statistik/index.blade.php` | ✅ Empat kartu angka, tabel status, legenda komposisi, blok JSON (K-S6). Kanvas grafik menyusul di langkah 7 |
+| `resources/views/statistik/index.blade.php` | ✅ Empat kartu angka, tabel status, legenda komposisi, blok JSON (K-S6), dan dua kanvas |
 | `resources/views/components/kartu-statistik.blade.php` | ✅ Komponen kartu angka: label, nilai besar, keterangan kecil, dan catatan opsional untuk angka yang benar tetapi mudah disalahpahami (E-S15) |
-| `resources/js/statistik.js` | Membaca blok JSON, menyalakan tiga grafik Chart.js |
+| `resources/js/statistik.js` | ✅ Membaca blok JSON, menyalakan dua grafik Chart.js. Komponen didaftarkan satu per satu, bukan lewat `chart.js/auto` yang menarik seluruh jenis grafik |
 | `tests/Feature/Statistik/StatistikTest.php` | Lihat §12 |
 
 ### 8.2 Yang diubah
@@ -210,8 +212,8 @@ Letak di sidebar: **di atas `Antrean`**, sebagai item pertama. Ia adalah ringkas
 | `resources/views/layouts/app.blade.php:18-26` | ✅ **Selesai.** Satu item `$menu` baru, `['statistik.index', 'Statistik', true, 'statistik']`, ditaruh paling atas | Elemen ketiga `true` = kedua role |
 | `resources/views/components/ikon.blade.php` | ✅ **Selesai.** Satu path SVG baru bernama `statistik` (batang naik) | Inline, viewBox 24×24, `currentColor` — konvensi berkas itu |
 | **`database/migrations/uji/2020_01_01_000000_buat_tabel_n8n.php`** | ✅ **Selesai.** **Tambah tabel `public.log_permintaan`**, dan tambahkan namanya ke daftar `dropIfExists` pada `down()` | **Komentar di baris 104-106 berkata `log_permintaan` sengaja tidak dibuat karena Laravel tidak membacanya. Komentar itu kini keliru dan wajib diperbarui**, bukan dibiarkan — komentar yang berbohong lebih berbahaya daripada tidak ada komentar. `sesi` dan `counter` tetap tidak dibuat |
-| `vite.config.js:9` | Tambah `'resources/js/statistik.js'` ke array `input` | K-S5 |
-| `package.json` | `chart.js` sebagai dependency | Dependency JS runtime pertama proyek ini yang benar-benar dimuat |
+| `vite.config.js:9` | ✅ **Selesai.** Tambah `'resources/js/statistik.js'` ke array `input` | K-S5 |
+| `package.json` | ✅ **Selesai.** `chart.js` ^4.5.1 | Dependency JS runtime pertama proyek ini yang benar-benar dimuat. Ditaruh di `devDependencies` mengikuti isi berkas itu — seluruhnya di-bundle saat build, tidak ada yang dibaca saat runtime server |
 | `config/app.php:68` | `'timezone' => env('APP_TIMEZONE', 'UTC')` | ✅ **Selesai.** K-S7. Nilai default tetap UTC supaya perilaku ditentukan `.env`, bukan tertanam di kode |
 | `.env` dan `.env.example` | `APP_TIMEZONE=Asia/Makassar` | ✅ **Selesai.** `.env.example` sebelumnya tidak memuat kunci ini sama sekali |
 | **`config/database.php`** (blok `pgsql`) | **`'timezone' => env('DB_TIMEZONE', env('APP_TIMEZONE', 'UTC'))`** | ✅ **Selesai.** K-S15 — tidak ada di rancangan awal, ditemukan saat mengerjakan K-S7. Tanpa ini setiap penulisan `timestamptz` di produksi bergeser +8 jam |
@@ -478,6 +480,14 @@ Seluruhnya pada database **pengujian** (`surat_uji`, port 5433 — **jangan prod
 7. **Bandingkan angka itu dengan "Total Permintaan Masuk".** Per 19 Agu 2026 selisihnya tepat satu (20 vs 19) — dan selisih itu belum dijelaskan (§16.1). Selisih yang membesar berarti surat hilang dari tabel tanpa sepengetahuan Laravel
 
 ### V-S5 Kinerja dan aset
+
+**Sebagian sudah diperiksa 19 Agu 2026** (langkah 7), lewat berkas uji sementara yang kemudian dihapus:
+- ✅ `/statistik` memuat tepat dua aset, keduanya dari origin sendiri: `app.css` dan `statistik.js`
+- ✅ `statistik.js` **tidak** dimuat di halaman lain
+- ✅ Tidak ada satu pun URL ke host di luar `surat.test`
+- ✅ Kedua kanvas terender, dan legenda komposisi tetap ada sebagai HTML di sebelahnya
+
+Sisanya menuntut peramban sungguhan dari jaringan sekolah:
 1. Buka `/statistik` dari jaringan sekolah, bukan dari mesin pengembang. Catat waktu muatnya
 2. Tab Network: pastikan **tidak ada** permintaan ke host selain origin sendiri
 3. Buka `/antrean`, pastikan Chart.js **tidak** ikut terunduh di sana
@@ -530,7 +540,7 @@ Rilis pertama memakai kalender (30 hari terakhir, sepanjang waktu). Bila pimpina
 4. ✅ **SELESAI 19 Agu 2026.** Controller + Blade tanpa grafik: empat kartu, tabel status, legenda komposisi, dan blok JSON — seluruhnya dirender server. **Route ikut dikerjakan di sini**, menyimpang dari langkah 6: tanpa route halaman tidak dapat dirender maupun diuji, sehingga langkah 5 mustahil. Menu sidebar, ikon, dan `rutaBeranda()` tetap di langkah 6. Blok JSON juga dimajukan ke sini karena ia HTML biasa, dan §12 memang mengandalkannya sebagai cara membaca angka saat pengujian
 5. ✅ **SELESAI 19 Agu 2026.** `tests/Feature/Statistik/StatistikTest.php` — 11 test, 54 assertion; suite naik dari 132 ke **143 hijau**. **Penyesuaian `LoginTest.php:30-37` DIPINDAH ke langkah 6**: test itu menguji tujuan pendaratan kepsek, jadi ia harus berubah bersama `rutaBeranda()`. Mengubahnya lebih dulu membuat suite merah di antara dua commit
 6. ✅ **SELESAI 19 Agu 2026.** Menu sidebar, ikon, `rutaBeranda()`, dan penyesuaian `LoginTest` yang ditunda dari langkah 5 — perilaku dan tesnya berpindah dalam satu commit. Route sudah dikerjakan di langkah 4. **V-S2 lulus seluruhnya**, dijalankan sekali lewat berkas sementara yang kemudian dihapus
-7. **Chart.js**: `package.json`, `vite.config.js`, `resources/js/statistik.js`, blok JSON, tiga kanvas. `npm run build`
+7. ✅ **SELESAI 19 Agu 2026.** Chart.js 4.5.1, entry Vite tersendiri, `resources/js/statistik.js`, dan **dua kanvas — bukan tiga**. Panel status tetap batang HTML/CSS: ia sudah terbaca tanpa JavaScript, dan menggantinya dengan kanvas akan menghapus properti yang sudah ada (E-S11) tanpa menambah apa pun. Bundel `statistik.js` **57,7 kB gzip**, dimuat **hanya** di `/statistik`
 8. **V-S3, V-S4, V-S5**
 
 Langkah 4 sengaja mendahului langkah 7, dengan alasan yang sama seperti §17 spesifikasi induk menempatkan riwayat sebelum antrean: bagian yang tidak bergantung pada hal baru dikerjakan lebih dulu, supaya ketika yang baru diperkenalkan, hanya ada satu tersangka.

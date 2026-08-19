@@ -110,5 +110,10 @@
     </main>
 </div>
 
+{{-- Skrip khusus halaman. Sengaja bukan satu bundel untuk semua: halaman yang
+     tidak memerlukan JavaScript tidak boleh ikut mengunduhnya, dan sampai
+     sekarang hampir semuanya memang tidak memerlukannya. --}}
+@stack('skrip')
+
 </body>
 </html>

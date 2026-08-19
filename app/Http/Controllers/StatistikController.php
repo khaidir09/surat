@@ -352,6 +352,11 @@ class StatistikController extends Controller
             self::JENIS_TUGAS => '#16584a', // pine
             self::JENIS_KETERANGAN => '#6d3b8e', // ket
             'lainnya' => '#5c6b63',         // redup
+
+            // Dipakai grafik untuk sumbu dan garis bantu, supaya kanvas tidak
+            // memakai abu-abu bawaan Chart.js yang tidak ada di palet mana pun.
+            'teks' => '#5c6b63',            // redup
+            'garis' => '#e1e6e0',           // garis
         ];
     }
 }
