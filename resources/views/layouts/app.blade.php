@@ -16,6 +16,10 @@
     // dari daftar ini tidak menutup aksesnya.
     // Elemen keempat adalah nama ikon di resources/views/components/ikon.blade.php.
     $menu = array_filter([
+        // Paling atas karena ia ringkasan. Ditaruh setelah daftar-daftar kerja,
+        // ia akan terbaca sebagai pelengkap alih-alih titik awal.
+        ['statistik.index', 'Statistik', true, 'statistik'],
+
         ['antrean.index', 'Antrean', $pengguna->adalahTas(), 'antrean'],
         ['riwayat.index', 'Riwayat', true, 'riwayat'],
         ['pegawai.index', 'Pegawai', $pengguna->adalahTas(), 'pegawai'],

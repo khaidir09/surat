@@ -206,9 +206,9 @@ Letak di sidebar: **di atas `Antrean`**, sebagai item pertama. Ia adalah ringkas
 | Path | Perubahan | Catatan |
 |---|---|---|
 | `routes/web.php` | ✅ **Selesai.** Satu route di dalam grup `['auth','aktif']` yang sudah ada | Bukan di dalam grup `role:tas` |
-| `app/Models/User.php:79-82` | `rutaBeranda()` untuk `kepsek` → `statistik.index` | K-S11 |
-| `resources/views/layouts/app.blade.php:18-26` | Satu item `$menu` baru, `['statistik.index', 'Statistik', true, 'statistik']` | Elemen ketiga `true` = kedua role |
-| `resources/views/components/ikon.blade.php` | Satu path SVG baru bernama `statistik` | Inline, viewBox 24×24, `currentColor` — konvensi berkas itu |
+| `app/Models/User.php:79-82` | ✅ **Selesai.** `rutaBeranda()` untuk `kepsek` → `statistik.index` | K-S11 |
+| `resources/views/layouts/app.blade.php:18-26` | ✅ **Selesai.** Satu item `$menu` baru, `['statistik.index', 'Statistik', true, 'statistik']`, ditaruh paling atas | Elemen ketiga `true` = kedua role |
+| `resources/views/components/ikon.blade.php` | ✅ **Selesai.** Satu path SVG baru bernama `statistik` (batang naik) | Inline, viewBox 24×24, `currentColor` — konvensi berkas itu |
 | **`database/migrations/uji/2020_01_01_000000_buat_tabel_n8n.php`** | ✅ **Selesai.** **Tambah tabel `public.log_permintaan`**, dan tambahkan namanya ke daftar `dropIfExists` pada `down()` | **Komentar di baris 104-106 berkata `log_permintaan` sengaja tidak dibuat karena Laravel tidak membacanya. Komentar itu kini keliru dan wajib diperbarui**, bukan dibiarkan — komentar yang berbohong lebih berbahaya daripada tidak ada komentar. `sesi` dan `counter` tetap tidak dibuat |
 | `vite.config.js:9` | Tambah `'resources/js/statistik.js'` ke array `input` | K-S5 |
 | `package.json` | `chart.js` sebagai dependency | Dependency JS runtime pertama proyek ini yang benar-benar dimuat |
@@ -216,7 +216,7 @@ Letak di sidebar: **di atas `Antrean`**, sebagai item pertama. Ia adalah ringkas
 | `.env` dan `.env.example` | `APP_TIMEZONE=Asia/Makassar` | ✅ **Selesai.** `.env.example` sebelumnya tidak memuat kunci ini sama sekali |
 | **`config/database.php`** (blok `pgsql`) | **`'timezone' => env('DB_TIMEZONE', env('APP_TIMEZONE', 'UTC'))`** | ✅ **Selesai.** K-S15 — tidak ada di rancangan awal, ditemukan saat mengerjakan K-S7. Tanpa ini setiap penulisan `timestamptz` di produksi bergeser +8 jam |
 | **`phpunit.xml`** | **`<env name="APP_TIMEZONE" value="Asia/Makassar"/>`** | ✅ **Selesai.** Dipatok agar tes batas hari WITA memberi hasil sama di setiap mesin, tidak bergantung pada `.env` masing-masing |
-| `tests/Feature/Auth/LoginTest.php:30-37` | `test_kepsek_mendarat_di_riwayat_bukan_antrean` | **Akan patah.** Harus disesuaikan, termasuk namanya |
+| `tests/Feature/Auth/LoginTest.php:30-37` | ✅ **Selesai.** Diganti menjadi `test_kepsek_mendarat_di_statistik_bukan_antrean` | Nama ikut diganti: nama test yang berbohong lebih buruk daripada tidak ada test |
 
 ### 8.2.1 Jebakan yang ditemui saat langkah 4
 
@@ -449,10 +449,16 @@ Dijalankan **sebelum** halaman statistik dibuat, supaya bila ada yang rusak peny
 4. **Yang TIDAK berubah dan tidak perlu diperiksa:** "x jam yang lalu" pada kartu antrean. `diffForHumans()` membandingkan dua instan absolut, sehingga ia sudah benar bahkan ketika aplikasi masih UTC. Rancangan awal dokumen ini keliru menyebutnya terpaut 8 jam — dikoreksi 19 Agu 2026 setelah diperiksa terhadap data sungguhan
 
 ### V-S2 Otorisasi — manual, menggantikan test yang tidak dicakup (§12)
-1. Login sebagai `kepsek` → **harus mendarat langsung di `/statistik`**
-2. Sebagai `kepsek`, buka `/statistik` lewat menu → **200**, bukan 403
-3. Login sebagai `tas` → mendarat di `/antrean`; buka `/statistik` lewat menu → **200**
-4. Logout, buka `/statistik` → diarahkan ke `/login`
+
+**✅ Lulus 19 Agu 2026** (langkah 6). Dijalankan sekali lewat berkas uji sementara yang kemudian dihapus — pemeriksaan, bukan tes permanen; risiko yang diterima R-S5 tetap berlaku untuk perubahan berikutnya.
+
+1. ✅ Login sebagai `kepsek` → mendarat di `/statistik`. Ini satu-satunya langkah yang kini dijaga tes permanen (`LoginTest`)
+2. ✅ Sebagai `kepsek`, buka `/statistik` → **200**, bukan 403
+3. ✅ Login sebagai `tas` → mendarat di `/antrean`; `/statistik` → **200**
+4. ✅ Logout, buka `/statistik` → diarahkan ke `/login`
+5. ✅ Penyaringan menu tidak terganggu oleh item baru: `tas` melihat tujuh menu, `kepsek` melihat statistik, riwayat, agenda, dan status kepsek
+
+**Catatan cara memeriksa:** menu harus dicocokkan lewat `href`, bukan lewat teks labelnya. Item menu merender ikon lalu label pada baris terpisah, sehingga pencocokan teks memberi jawaban yang salah di **kedua** arah — "Antrean" tidak ditemukan meski ada, dan "Statistik" ditemukan lewat `<title>` serta `<h1>` meski menunya tidak dirender. Kekeliruan ini benar-benar terjadi pada percobaan pertama V-S2.
 
 ### V-S3 Ketahanan data — manual, menggantikan test yang tidak dicakup (§12)
 Seluruhnya pada database **pengujian** (`surat_uji`, port 5433 — **jangan produksi**).
@@ -523,7 +529,7 @@ Rilis pertama memakai kalender (30 hari terakhir, sepanjang waktu). Bila pimpina
 3. ✅ **SELESAI 19 Agu 2026.** `log_permintaan` ke `database/migrations/uji/`, komentar yang menyatakan tabel itu sengaja tidak dibuat sudah diperbarui, dan namanya masuk ke `down()`. Suite tetap **132 hijau tanpa satu pun test baru**; struktur di DB uji terverifikasi identik dengan produksi
 4. ✅ **SELESAI 19 Agu 2026.** Controller + Blade tanpa grafik: empat kartu, tabel status, legenda komposisi, dan blok JSON — seluruhnya dirender server. **Route ikut dikerjakan di sini**, menyimpang dari langkah 6: tanpa route halaman tidak dapat dirender maupun diuji, sehingga langkah 5 mustahil. Menu sidebar, ikon, dan `rutaBeranda()` tetap di langkah 6. Blok JSON juga dimajukan ke sini karena ia HTML biasa, dan §12 memang mengandalkannya sebagai cara membaca angka saat pengujian
 5. ✅ **SELESAI 19 Agu 2026.** `tests/Feature/Statistik/StatistikTest.php` — 11 test, 54 assertion; suite naik dari 132 ke **143 hijau**. **Penyesuaian `LoginTest.php:30-37` DIPINDAH ke langkah 6**: test itu menguji tujuan pendaratan kepsek, jadi ia harus berubah bersama `rutaBeranda()`. Mengubahnya lebih dulu membuat suite merah di antara dua commit
-6. **Route, menu sidebar, ikon, `rutaBeranda()`**, lalu V-S2
+6. ✅ **SELESAI 19 Agu 2026.** Menu sidebar, ikon, `rutaBeranda()`, dan penyesuaian `LoginTest` yang ditunda dari langkah 5 — perilaku dan tesnya berpindah dalam satu commit. Route sudah dikerjakan di langkah 4. **V-S2 lulus seluruhnya**, dijalankan sekali lewat berkas sementara yang kemudian dihapus
 7. **Chart.js**: `package.json`, `vite.config.js`, `resources/js/statistik.js`, blok JSON, tiga kanvas. `npm run build`
 8. **V-S3, V-S4, V-S5**
 

@@ -27,14 +27,14 @@ class LoginTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
-    public function test_kepsek_mendarat_di_riwayat_bukan_antrean(): void
+    public function test_kepsek_mendarat_di_statistik_bukan_antrean(): void
     {
         $user = User::factory()->kepsek()->create(['password' => 'rahasia123']);
 
         $this->post('/login', [
             'email' => $user->email,
             'password' => 'rahasia123',
-        ])->assertRedirect(route('riwayat.index'));
+        ])->assertRedirect(route('statistik.index'));
     }
 
     public function test_kata_sandi_salah_ditolak(): void
