@@ -195,9 +195,9 @@ Letak di sidebar: **di atas `Antrean`**, sebagai item pertama. Ia adalah ringkas
 
 | Path | Isi |
 |---|---|
-| `app/Http/Controllers/StatistikController.php` | Satu method `index()`, enam method privat agregasi (K-S8) |
-| `resources/views/statistik/index.blade.php` | Empat kartu angka, tiga kanvas grafik, tabel status, blok JSON (K-S6) |
-| `resources/views/components/kartu-statistik.blade.php` | Komponen kartu angka: label, nilai besar, keterangan kecil |
+| `app/Http/Controllers/StatistikController.php` | ✅ Satu method `index()` dan method privat agregasi (K-S8) |
+| `resources/views/statistik/index.blade.php` | ✅ Empat kartu angka, tabel status, legenda komposisi, blok JSON (K-S6). Kanvas grafik menyusul di langkah 7 |
+| `resources/views/components/kartu-statistik.blade.php` | ✅ Komponen kartu angka: label, nilai besar, keterangan kecil, dan catatan opsional untuk angka yang benar tetapi mudah disalahpahami (E-S15) |
 | `resources/js/statistik.js` | Membaca blok JSON, menyalakan tiga grafik Chart.js |
 | `tests/Feature/Statistik/StatistikTest.php` | Lihat §12 |
 
@@ -205,7 +205,7 @@ Letak di sidebar: **di atas `Antrean`**, sebagai item pertama. Ia adalah ringkas
 
 | Path | Perubahan | Catatan |
 |---|---|---|
-| `routes/web.php` | Satu route di dalam grup `['auth','aktif']` yang sudah ada (setelah baris 41) | Bukan di dalam grup `role:tas` |
+| `routes/web.php` | ✅ **Selesai.** Satu route di dalam grup `['auth','aktif']` yang sudah ada | Bukan di dalam grup `role:tas` |
 | `app/Models/User.php:79-82` | `rutaBeranda()` untuk `kepsek` → `statistik.index` | K-S11 |
 | `resources/views/layouts/app.blade.php:18-26` | Satu item `$menu` baru, `['statistik.index', 'Statistik', true, 'statistik']` | Elemen ketiga `true` = kedua role |
 | `resources/views/components/ikon.blade.php` | Satu path SVG baru bernama `statistik` | Inline, viewBox 24×24, `currentColor` — konvensi berkas itu |
@@ -217,6 +217,14 @@ Letak di sidebar: **di atas `Antrean`**, sebagai item pertama. Ia adalah ringkas
 | **`config/database.php`** (blok `pgsql`) | **`'timezone' => env('DB_TIMEZONE', env('APP_TIMEZONE', 'UTC'))`** | ✅ **Selesai.** K-S15 — tidak ada di rancangan awal, ditemukan saat mengerjakan K-S7. Tanpa ini setiap penulisan `timestamptz` di produksi bergeser +8 jam |
 | **`phpunit.xml`** | **`<env name="APP_TIMEZONE" value="Asia/Makassar"/>`** | ✅ **Selesai.** Dipatok agar tes batas hari WITA memberi hasil sama di setiap mesin, tidak bergantung pada `.env` masing-masing |
 | `tests/Feature/Auth/LoginTest.php:30-37` | `test_kepsek_mendarat_di_riwayat_bukan_antrean` | **Akan patah.** Harus disesuaikan, termasuk namanya |
+
+### 8.2.1 Jebakan yang ditemui saat langkah 4
+
+**`@json` pada Blade tidak boleh menerima array literal.** Direktif itu memecah ekspresinya dengan `explode(',')` untuk mengambil argumen `flags` dan `depth`, sehingga `@json(['a' => $a, 'b' => $b])` terpotong di koma pertama: kunci berikutnya hilang dan `[` tidak pernah ditutup. Hasilnya `ParseError` yang menunjuk **berkas hasil kompilasi**, bukan berkas Blade-nya, sehingga penyebabnya tidak terbaca dari pesan galat.
+
+`Blade::compileString()` **tidak** menangkapnya — ia hanya menghasilkan string dan tidak pernah mem-parse hasilnya sebagai PHP. Satu-satunya cara melihatnya adalah `php -l` terhadap keluaran kompilasi.
+
+Karena itu payload grafik dirakit di controller dan diteruskan sebagai satu variabel: `@json($grafik)`. Aturan umumnya — **`@json` hanya aman untuk satu variabel tunggal.**
 
 ### 8.3 Yang sengaja tidak disentuh
 
@@ -506,7 +514,7 @@ Rilis pertama memakai kalender (30 hari terakhir, sepanjang waktu). Bila pimpina
 1. ✅ **SELESAI 19 Agu 2026.** Query verifikasi produksi. Hasilnya mengubah metrik 7 (K-S12 diamandemen, R-S9 terbukti) dan memunculkan §16.1 sebagai pertanyaan baru
 2. ✅ **SELESAI 19 Agu 2026.** Timezone, tersendiri. `config/app.php`, `.env`, `.env.example` — **ditambah `config/database.php` dan `phpunit.xml`** yang tidak ada di rancangan awal (K-S15). V-S0 lulus: 132 test hijau sebelum dan sesudah, `migrate --pretend` bersih. **V-S1 langkah 3 belum dijalankan** karena menuntut persetujuan surat sungguhan
 3. ✅ **SELESAI 19 Agu 2026.** `log_permintaan` ke `database/migrations/uji/`, komentar yang menyatakan tabel itu sengaja tidak dibuat sudah diperbarui, dan namanya masuk ke `down()`. Suite tetap **132 hijau tanpa satu pun test baru**; struktur di DB uji terverifikasi identik dengan produksi
-4. **Controller + Blade tanpa grafik.** Empat kartu angka dan tabel status — seluruhnya HTML. Di titik ini halaman sudah berguna dan sudah dapat diuji sepenuhnya, tanpa satu baris JavaScript
+4. ✅ **SELESAI 19 Agu 2026.** Controller + Blade tanpa grafik: empat kartu, tabel status, legenda komposisi, dan blok JSON — seluruhnya dirender server. **Route ikut dikerjakan di sini**, menyimpang dari langkah 6: tanpa route halaman tidak dapat dirender maupun diuji, sehingga langkah 5 mustahil. Menu sidebar, ikon, dan `rutaBeranda()` tetap di langkah 6. Blok JSON juga dimajukan ke sini karena ia HTML biasa, dan §12 memang mengandalkannya sebagai cara membaca angka saat pengujian
 5. **Test §12**, terhadap langkah 4. Termasuk penyesuaian `LoginTest.php:30-37`
 6. **Route, menu sidebar, ikon, `rutaBeranda()`**, lalu V-S2
 7. **Chart.js**: `package.json`, `vite.config.js`, `resources/js/statistik.js`, blok JSON, tiga kanvas. `npm run build`

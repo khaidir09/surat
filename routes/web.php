@@ -7,6 +7,7 @@ use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\RiwayatController;
 use App\Http\Controllers\SiswaController;
+use App\Http\Controllers\StatistikController;
 use App\Http\Controllers\StatusKepsekController;
 use App\Http\Controllers\SuratPdfController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,12 @@ Route::post('/logout', [LoginController::class, 'keluar'])
 Route::middleware(['auth', 'aktif'])->group(function () use ($jenis) {
 
     Route::get('/', fn () => redirect(request()->user()->rutaBeranda()))->name('beranda');
+
+    // --- Statistik (docs/specs/statistik-surat.md) ----------------------------
+    // Sengaja TANPA role:tas. Kepsek justru audiens utamanya, dan halaman ini
+    // tidak memuat data pribadi apa pun — seluruhnya angka agregat, tanpa nama
+    // siswa, tanpa nomor WhatsApp pemohon.
+    Route::get('/statistik', [StatistikController::class, 'index'])->name('statistik.index');
 
     // --- Antrean persetujuan (langkah 6, selesai) -----------------------------
     Route::middleware('role:tas')->group(function () use ($jenis) {
