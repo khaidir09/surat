@@ -6,6 +6,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 /**
@@ -198,10 +199,43 @@ class StatistikController extends Controller
      */
     private function permintaanChatbot(): array
     {
+        // Keberadaan tabel diperiksa lebih dulu, bukan disimpulkan dari
+        // pengecualian yang dilempar query-nya.
+        //
+        // Postgres membatalkan SELURUH transaksi begitu satu statement gagal
+        // (SQLSTATE 25P02), sehingga menangkap QueryException memang mencegah
+        // halaman jatuh — tetapi setiap query sesudahnya ikut mati bila
+        // permintaan ini kebetulan berjalan di dalam transaksi. Di produksi
+        // request web tidak dibungkus transaksi, jadi cacatnya tidak terlihat
+        // di sana; ia muncul justru saat diuji, dan perilaku yang hanya benar
+        // di luar pengujian tidak dapat dibuktikan benar.
+        //
+        // hasTable() menjawab pertanyaan yang sama tanpa menggagalkan satu
+        // statement pun — dan inilah memang bentuk kegagalan yang diantisipasi
+        // R-S10: n8n mengganti nama atau menghapus tabel telemetrinya.
+        // Awalan "public." WAJIB, dan ketiadaannya tidak menghasilkan galat
+        // apa pun — hanya jawaban "tidak ada" yang selalu salah.
+        //
+        // Schema::hasTable() TIDAK mengikuti search_path: nama tanpa awalan
+        // selalu dicari di schema pertama, yaitu "app". Jadi
+        // hasTable('log_permintaan') maupun hasTable('surat_tugas') sama-sama
+        // menjawab false meski tabelnya ada. Ini asimetri yang mudah terlewat,
+        // karena DB::table() di baris berikutnya justru mengikuti search_path
+        // dan menemukan tabel yang sama tanpa awalan.
+        //
+        // Perangkap yang sama dengan aturan migration di CLAUDE.md.
+        if (! Schema::hasTable('public.log_permintaan')) {
+            Log::warning('Tabel log_permintaan tidak ditemukan; kartu chatbot dikosongkan.');
+
+            return ['tersedia' => false, 'jumlah' => 0, 'sunyi' => false];
+        }
+
         try {
             $diajukan = DB::table('log_permintaan')->where('status', 'diajukan')->count();
             $seluruh = DB::table('log_permintaan')->count();
         } catch (QueryException $e) {
+            // Jaring terakhir untuk kegagalan di luar dugaan — hak akses
+            // dicabut, kolom status dihapus — yang tidak terjawab hasTable().
             Log::warning('log_permintaan tidak terbaca', ['sebab' => $e->getMessage()]);
 
             return ['tersedia' => false, 'jumlah' => 0, 'sunyi' => false];

@@ -228,6 +228,14 @@ Letak di sidebar: **di atas `Antrean`**, sebagai item pertama. Ia adalah ringkas
 
 Karena itu payload grafik dirakit di controller dan diteruskan sebagai satu variabel: `@json($grafik)`. Aturan umumnya — **`@json` hanya aman untuk satu variabel tunggal.**
 
+### 8.2.2 Jebakan yang ditemui saat langkah 8
+
+**`Schema::hasTable()` tidak mengikuti `search_path`.** Nama tanpa awalan selalu dicari di schema pertama, yaitu `app`; `hasTable('log_permintaan')` dan bahkan `hasTable('surat_tugas')` sama-sama menjawab `false` meski tabelnya ada. Yang membuatnya berbahaya: **tidak ada galat sama sekali**, hanya jawaban "tidak ada" yang selalu salah — kartu chatbot akan menampilkan "—" selamanya di produksi tanpa satu pun tanda bahwa ada yang keliru.
+
+Asimetrinya mudah terlewat: `DB::table('log_permintaan')` di baris berikutnya **mengikuti** `search_path` dan menemukan tabel yang sama tanpa awalan. Perangkap yang setara dengan aturan `public.` pada migration di `CLAUDE.md`.
+
+**Postgres membatalkan seluruh transaksi setelah satu statement gagal** (`SQLSTATE 25P02`). Menangkap `QueryException` memang mencegah halaman jatuh, tetapi setiap query sesudahnya ikut mati bila permintaan berjalan di dalam transaksi. Di produksi request web tidak dibungkus transaksi sehingga cacatnya tak terlihat di sana — ia muncul justru saat diuji. Karena itu keberadaan tabel diperiksa lebih dulu dengan `hasTable()`, dan `try/catch` disisakan hanya sebagai jaring untuk kegagalan lain.
+
 ### 8.3 Yang sengaja tidak disentuh
 
 | Path | Alasan |
@@ -500,17 +508,33 @@ Sisanya menuntut peramban sungguhan dari jaringan sekolah:
 
 **Terjawab 19 Agu 2026** dan sudah dipindahkan ke dalam isi dokumen: `approved_at` terisi; timezone Supabase UTC; `log_permintaan` hidup dan mencatat perpindahan status dengan kosakata `diajukan`/`menunggu_ttd`/`diterbitkan`; volume data kini 19 surat. Yang tersisa:
 
-**~~16.1 Satu baris `surat_keterangan` hilang.~~ — TERJAWAB 19 Agu 2026.** Dihapus manual lewat SQL editor Supabase saat uji coba, bukan oleh n8n. Kemungkinan 2 pada §14.1 spesifikasi induk **tidak** terjadi; angka "Total Permintaan Masuk" tetap dapat dipercaya sebagai cerminan isi tabel.
+**16.1 Sebagian baris `app.aktivitas` tercatat 8 jam di masa depan. — PERLU KEPUTUSAN.**
+
+Ditemukan saat V-S1 langkah 3, 19 Agu 2026. Baris id 74–78 mengaku terjadi hingga **6 jam di masa depan** relatif terhadap jam database maupun jam PHP — mustahil bagi penulisan yang benar, dan tanda khas ketidakcocokan timezone aplikasi vs sesi DB yang dijelaskan K-S15.
+
+**Mekanismenya kini sudah benar dan terbukti** (baca-saja): string tanpa offset yang akan dikirim Laravel ditafsirkan database sebagai WITA, mendarat dalam selisih satu detik dari `now()`. Penulisan baru tidak lagi bergeser.
+
+Yang belum jelas: **berapa banyak baris lama yang ikut tergeser.** Pergeseran +8 jam hanya terlihat sebagai "masa depan" untuk kejadian dalam delapan jam terakhir; baris yang lebih tua tampak wajar meski mungkin sama-sama salah.
+
+**`approved_at` tidak dapat dijadikan pembanding** — ia sering di-backdate oleh fitur backfill, sehingga surat yang disetujui 18 Agustus punya `approved_at` bertanggal Juli (selisih lebih dari 1.100 jam). Percobaan pertama saya memakainya sebagai patokan kebenaran, dan itu keliru.
+
+Dua keputusan yang menunggu pemilik sistem, keduanya **penulisan ke jejak audit** sehingga tidak dikerjakan tanpa perintah:
+1. Apakah baris yang tergeser dikoreksi (`created_at - interval '8 hours'`), dibiarkan, atau ditandai
+2. Bila dikoreksi, baris mana — sebab batas awal pergeseran tidak dapat ditentukan dari data yang ada
+
+Cara memastikan penulisan baru sudah benar tanpa menebak: lakukan satu aksi apa pun lewat dashboard, lalu bandingkan baris terbarunya dengan jam dinding.
+
+**16.2 Satu baris `surat_keterangan` hilang. — TERJAWAB 19 Agu 2026.** Dihapus manual lewat SQL editor Supabase saat uji coba, bukan oleh n8n. Kemungkinan 2 pada §14.1 spesifikasi induk **tidak** terjadi; angka "Total Permintaan Masuk" tetap dapat dipercaya sebagai cerminan isi tabel.
 
 Sisa risikonya berpindah ke RS5 spesifikasi induk, bukan ke ketepatan metrik: SQL editor tetap dapat menghapus baris tanpa melewati Laravel, dan tidak ada halaman mana pun yang akan menyadarinya. Selisih tetap satu antara `diajukan` (20) dan jumlah baris surat (19) kini terjelaskan seluruhnya.
 
-**16.2 Nilai `status` untuk surat yang ditolak — belum terlihat di data.**
+**16.3 Nilai `status` untuk surat yang ditolak — belum terlihat di data.**
 Pemilik sistem menyatakan nilainya `ditolak` dan barisnya dipertahankan. Query 19 Agu 2026 tidak menemukan satu pun baris berstatus itu — belum pernah ada surat ditolak, jadi pernyataan tersebut belum dapat dibandingkan dengan kenyataan. **Tidak memblokir:** K-S1 tidak menyebut nilai status apa pun, dan K-S2 menampilkan apa pun yang muncul. RS14 pada spesifikasi induk tetap terbuka sampai ada satu penolakan sungguhan.
 
-**16.3 Apakah tahun ajaran perlu menjadi satuan waktu nanti.**
+**16.4 Apakah tahun ajaran perlu menjadi satuan waktu nanti.**
 Rilis pertama memakai kalender (30 hari terakhir, sepanjang waktu). Bila pimpinan ternyata berpikir dalam tahun ajaran, batas tahun ajarannya harus ditentukan — informasi itu tidak ada di mana pun di database.
 
-**16.4 Rentang `log_permintaan` hanya dua hari** (18–19 Agu 2026). Tabelnya tampak baru atau pernah dibersihkan. Konsekuensinya: metrik 7 tidak sebanding dengan metrik 1 dan 3 yang mencakup sejak Juli. **Keterangan pada kartunya wajib menyebut hal ini** selama rentangnya masih jauh lebih pendek daripada riwayat surat.
+**16.5 Rentang `log_permintaan` hanya dua hari** (18–19 Agu 2026). Tabelnya tampak baru atau pernah dibersihkan. Konsekuensinya: metrik 7 tidak sebanding dengan metrik 1 dan 3 yang mencakup sejak Juli. **Keterangan pada kartunya wajib menyebut hal ini** selama rentangnya masih jauh lebih pendek daripada riwayat surat.
 
 ---
 
@@ -541,7 +565,7 @@ Rilis pertama memakai kalender (30 hari terakhir, sepanjang waktu). Bila pimpina
 5. ✅ **SELESAI 19 Agu 2026.** `tests/Feature/Statistik/StatistikTest.php` — 11 test, 54 assertion; suite naik dari 132 ke **143 hijau**. **Penyesuaian `LoginTest.php:30-37` DIPINDAH ke langkah 6**: test itu menguji tujuan pendaratan kepsek, jadi ia harus berubah bersama `rutaBeranda()`. Mengubahnya lebih dulu membuat suite merah di antara dua commit
 6. ✅ **SELESAI 19 Agu 2026.** Menu sidebar, ikon, `rutaBeranda()`, dan penyesuaian `LoginTest` yang ditunda dari langkah 5 — perilaku dan tesnya berpindah dalam satu commit. Route sudah dikerjakan di langkah 4. **V-S2 lulus seluruhnya**, dijalankan sekali lewat berkas sementara yang kemudian dihapus
 7. ✅ **SELESAI 19 Agu 2026.** Chart.js 4.5.1, entry Vite tersendiri, `resources/js/statistik.js`, dan **dua kanvas — bukan tiga**. Panel status tetap batang HTML/CSS: ia sudah terbaca tanpa JavaScript, dan menggantinya dengan kanvas akan menghapus properti yang sudah ada (E-S11) tanpa menambah apa pun. Bundel `statistik.js` **57,7 kB gzip**, dimuat **hanya** di `/statistik`
-8. **V-S3, V-S4, V-S5**
+8. **Sebagian selesai 19 Agu 2026.** **V-S3 lulus** — dan menemukan dua cacat yang tidak terlihat oleh suite: `Schema::hasTable()` yang selalu menjawab `false` (§8.2.2) dan transaksi Postgres yang teracuni. **V-S4 lulus seluruhnya**, keenam pemeriksaan silang cocok terhadap data produksi. **V-S5 sebagian**; sisanya menuntut peramban. **V-S1 langkah 3 menemukan `app.aktivitas` yang tergeser** — lihat §16.1
 
 Langkah 4 sengaja mendahului langkah 7, dengan alasan yang sama seperti §17 spesifikasi induk menempatkan riwayat sebelum antrean: bagian yang tidak bergantung pada hal baru dikerjakan lebih dulu, supaya ketika yang baru diperkenalkan, hanya ada satu tersangka.
 
