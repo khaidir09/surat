@@ -59,13 +59,23 @@ return [
     | Application Timezone
     |--------------------------------------------------------------------------
     |
-    | Here you may specify the default timezone for your application, which
-    | will be used by the PHP date and date-time functions. The timezone
-    | is set to "UTC" by default as it is suitable for most use cases.
+    | Sekolah berada di Amuntai (WITA, UTC+8). Selama nilainya "UTC", surat
+    | yang dibuat pukul 07:00 WITA tercatat sebagai HARI SEBELUMNYA di setiap
+    | tampilan yang mengelompokkan per tanggal — kesalahan yang tidak pernah
+    | melempar galat, hanya menghasilkan angka yang keliru delapan jam.
+    |
+    | Dibaca dari .env, bukan ditulis mati di sini, supaya database pengujian
+    | dan produksi tidak terpaksa berbagi satu nilai (K-S7 pada
+    | docs/specs/statistik-surat.md).
+    |
+    | Perhatikan: nilai ini HANYA mengubah timezone PHP. Ia tidak menyetel
+    | timezone sesi Postgres, sehingga query yang mengelompokkan tanggal di
+    | sisi SQL tetap wajib menulis "at time zone 'Asia/Makassar'" sendiri
+    | (R-S3). Timezone sesi Supabase terverifikasi UTC pada 19 Agu 2026.
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------
