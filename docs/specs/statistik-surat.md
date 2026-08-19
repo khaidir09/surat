@@ -341,12 +341,19 @@ Nilai heksadesimalnya ditulis di JSON yang dicetak controller, bukan dibaca dari
 
 **Wajib meski tidak diminta**, karena bukan penambahan cakupan melainkan menjaga suite tetap hijau:
 
-- `tests/Feature/Auth/LoginTest.php:30-37` disesuaikan: kepsek kini mendarat di `/statistik`. Nama methodnya (`test_kepsek_mendarat_di_riwayat_bukan_antrean`) ikut diganti, karena nama test yang berbohong lebih buruk daripada tidak ada test.
+- `tests/Feature/Auth/LoginTest.php:30-37` disesuaikan: kepsek kini mendarat di `/statistik`. Nama methodnya (`test_kepsek_mendarat_di_riwayat_bukan_antrean`) ikut diganti, karena nama test yang berbohong lebih buruk daripada tidak ada test. **Dikerjakan di langkah 6 bersama `rutaBeranda()`**, bukan di langkah 5 — perilaku dan tesnya harus berpindah dalam satu commit.
 
 **Sengaja tidak dicakup, atas keputusan pemilik sistem** — dicatat di sini supaya keputusannya terlihat, bukan terlupa:
 
 - Test otorisasi kedua role terhadap `/statistik`. Konsekuensinya: bila route salah tempat dan masuk ke grup `role:tas`, kepsek akan menerima **403 pada halaman berandanya sendiri** dan tidak ada test yang menangkapnya. Mitigasi manual: V-S2.
 - Test ketahanan terhadap NULL dan database kosong (E-S1, E-S2, E-S3, E-S13, E-S14). Konsekuensinya: pembagian nol pada rata-rata dan kegagalan `log_permintaan` tidak terjaring otomatis. Mitigasi manual: V-S3.
+
+**Dua kait yang lahir dari langkah 5:**
+
+- `data-kartu="…"` pada nilai setiap kartu (`components/kartu-statistik.blade.php`). Tanpanya tes harus mencocokkan kelas Tailwind, sehingga setiap perubahan tampilan memerahkan tes yang sebenarnya menguji angka.
+- `buatPengajuanChatbot()` pada `Tests\Dukungan\MembuatDataSurat`, yang sengaja menyisipkan **lebih dari satu baris** per pengajuan. Penolong yang menyisipkan satu baris saja akan membuat metrik 7 hijau untuk bentuk data yang di produksi tidak pernah ada.
+
+**Test batas hari WITA sudah dibuktikan bukan test kosong:** dengan `APP_TIMEZONE` diubah sementara ke `UTC`, ia gagal tepat pada kasusnya — surat 07:30 WITA mendarat di tanggal sebelumnya. Pembuktian itu perlu diulang bila ekspresi tanggalnya pernah disentuh lagi.
 
 Cara membaca angka dari halaman untuk pengujian: blok `<script type="application/json" id="data-statistik">` (K-S6). Kanvas Chart.js tidak menghasilkan teks yang dapat diperiksa `assertSee`; blok JSON-nya bisa, dan ia adalah data yang sama persis dengan yang digambar.
 
@@ -515,7 +522,7 @@ Rilis pertama memakai kalender (30 hari terakhir, sepanjang waktu). Bila pimpina
 2. ✅ **SELESAI 19 Agu 2026.** Timezone, tersendiri. `config/app.php`, `.env`, `.env.example` — **ditambah `config/database.php` dan `phpunit.xml`** yang tidak ada di rancangan awal (K-S15). V-S0 lulus: 132 test hijau sebelum dan sesudah, `migrate --pretend` bersih. **V-S1 langkah 3 belum dijalankan** karena menuntut persetujuan surat sungguhan
 3. ✅ **SELESAI 19 Agu 2026.** `log_permintaan` ke `database/migrations/uji/`, komentar yang menyatakan tabel itu sengaja tidak dibuat sudah diperbarui, dan namanya masuk ke `down()`. Suite tetap **132 hijau tanpa satu pun test baru**; struktur di DB uji terverifikasi identik dengan produksi
 4. ✅ **SELESAI 19 Agu 2026.** Controller + Blade tanpa grafik: empat kartu, tabel status, legenda komposisi, dan blok JSON — seluruhnya dirender server. **Route ikut dikerjakan di sini**, menyimpang dari langkah 6: tanpa route halaman tidak dapat dirender maupun diuji, sehingga langkah 5 mustahil. Menu sidebar, ikon, dan `rutaBeranda()` tetap di langkah 6. Blok JSON juga dimajukan ke sini karena ia HTML biasa, dan §12 memang mengandalkannya sebagai cara membaca angka saat pengujian
-5. **Test §12**, terhadap langkah 4. Termasuk penyesuaian `LoginTest.php:30-37`
+5. ✅ **SELESAI 19 Agu 2026.** `tests/Feature/Statistik/StatistikTest.php` — 11 test, 54 assertion; suite naik dari 132 ke **143 hijau**. **Penyesuaian `LoginTest.php:30-37` DIPINDAH ke langkah 6**: test itu menguji tujuan pendaratan kepsek, jadi ia harus berubah bersama `rutaBeranda()`. Mengubahnya lebih dulu membuat suite merah di antara dua commit
 6. **Route, menu sidebar, ikon, `rutaBeranda()`**, lalu V-S2
 7. **Chart.js**: `package.json`, `vite.config.js`, `resources/js/statistik.js`, blok JSON, tiga kanvas. `npm run build`
 8. **V-S3, V-S4, V-S5**

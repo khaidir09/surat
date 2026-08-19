@@ -64,6 +64,30 @@ trait MembuatDataSurat
         ], $atribut));
     }
 
+    /**
+     * Satu pengajuan lewat chatbot, beserta jejak lanjutannya.
+     *
+     * Sengaja menyisipkan LEBIH DARI SATU baris. Di produksi log_permintaan
+     * mencatat setiap perpindahan status, sehingga 20 pengajuan meninggalkan
+     * 39 baris. Penolong yang hanya menyisipkan satu baris per pengajuan akan
+     * membuat tes hijau untuk bentuk data yang tidak pernah ada di sana —
+     * dan metrik yang menghitung seluruh baris akan lolos tanpa ketahuan.
+     *
+     * @param  array<int, string>  $lanjutan  peristiwa sesudah pengajuan
+     */
+    protected function buatPengajuanChatbot(
+        string $jenis = 'surat_tugas',
+        array $lanjutan = ['menunggu_ttd'],
+    ): void {
+        $baris = [['jenis_surat' => $jenis, 'status' => 'diajukan', 'waktu' => now()]];
+
+        foreach ($lanjutan as $status) {
+            $baris[] = ['jenis_surat' => $jenis, 'status' => $status, 'waktu' => now()];
+        }
+
+        DB::table('log_permintaan')->insert($baris);
+    }
+
     protected function tugaskanPetugas(int $suratTugasId, int ...$pegawaiId): void
     {
         DB::table('surat_tugas_petugas')->insert(array_map(

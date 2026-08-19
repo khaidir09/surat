@@ -25,17 +25,17 @@
 
 @section('isi')
     <div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <x-kartu-statistik label="Surat Diterbitkan" :nilai="$angka($terbit)" keterangan="sudah bernomor" />
+        <x-kartu-statistik kunci="terbit" label="Surat Diterbitkan" :nilai="$angka($terbit)" keterangan="sudah bernomor" />
 
         {{-- E-S2: tanpa satu pun approved_at, ini "—", bukan "0 menit".
              Nol akan terbaca sebagai "prosesnya instan". --}}
-        <x-kartu-statistik label="Rata-rata Waktu Proses" :nilai="$nilaiProses" :keterangan="$ketProses" />
+        <x-kartu-statistik kunci="proses" label="Rata-rata Waktu Proses" :nilai="$nilaiProses" :keterangan="$ketProses" />
 
-        <x-kartu-statistik label="Permintaan Masuk" :nilai="$angka($permintaan)" keterangan="seluruh riwayat" />
+        <x-kartu-statistik kunci="permintaan" label="Permintaan Masuk" :nilai="$angka($permintaan)" keterangan="seluruh riwayat" />
 
         {{-- Label sengaja BUKAN "Total Interaksi Bot": satu baris log adalah
              satu perpindahan status, bukan satu interaksi (R-S9). --}}
-        <x-kartu-statistik label="Permintaan lewat Chatbot" :nilai="$nilaiChatbot"
+        <x-kartu-statistik kunci="chatbot" label="Permintaan lewat Chatbot" :nilai="$nilaiChatbot"
                            :keterangan="$ketChatbot" :catatan="$catatanChatbot" />
     </div>
 
