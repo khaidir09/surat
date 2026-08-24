@@ -16,15 +16,46 @@
         ? 'dari ' . $proses['jumlah'] . ' surat tugas'
         : 'belum ada surat tugas yang disetujui';
 
-    $nilaiChatbot = $chatbot['tersedia'] ? $angka($chatbot['jumlah']) : '—';
+    // Ketiga angka chatbot berbagi satu sumber: log_permintaan. Bila tabelnya
+    // hilang, ketiganya hilang bersama-sama — bukan salah satunya saja.
     $ketChatbot = $chatbot['tersedia'] ? 'tercatat di log n8n' : 'log n8n tidak tersedia';
-    $catatanChatbot = $chatbot['sunyi']
+    $ketTanya = $chatbot['tersedia'] ? 'dijawab chatbot' : 'log n8n tidak tersedia';
+
+    $nilaiLog = fn (array $m) => $chatbot['tersedia'] ? $angka($m['jumlah']) : '—';
+
+    // Nol pada kartu pertanyaan punya dua sebab yang di layar terlihat sama
+    // (E-S16). Keduanya diberi kalimat sendiri: yang satu berarti n8n belum
+    // pernah mencatat peristiwa itu sama sekali, yang lain berarti nama
+    // statusnya sudah bukan "dijawab" lagi. Menyamakan keduanya berarti
+    // menyembunyikan asumsi yang sudah basi di balik angka nol yang wajar.
+    $catatanTanya = function (array $m) {
+        if (! $m['sunyi']) {
+            return null;
+        }
+
+        return $m['terlihat'] > 0
+            ? 'Tercatat ' . $m['terlihat'] . ' kali, tetapi tidak satu pun bertanda "dijawab". Nama statusnya mungkin berubah di n8n.'
+            : 'Belum pernah tercatat di log. Nama peristiwanya mungkin berbeda di n8n.';
+    };
+
+    $nilaiChatbot = $nilaiLog($chatbot['pengajuan']);
+    $catatanChatbot = $chatbot['pengajuan']['sunyi']
         ? 'Log terisi tetapi tidak ada yang bertanda "diajukan". Nama peristiwanya mungkin berubah di n8n.'
         : null;
+
+    $nilaiKepsek = $nilaiLog($chatbot['kepsek']);
+    $catatanKepsek = $catatanTanya($chatbot['kepsek']);
+
+    $nilaiJadwal = $nilaiLog($chatbot['jadwal']);
+    $catatanJadwal = $catatanTanya($chatbot['jadwal']);
 @endphp
 
 @section('isi')
-    <div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    {{-- Tiga kolom, bukan empat: baris pertama menjadi angka surat dan baris
+         kedua angka chatbot. Pengelompokan itu bukan kerapian belaka —
+         ketiga kartu bawah berbagi satu sumber dan menghilang bersama-sama
+         bila log_permintaan tidak terbaca. --}}
+    <div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <x-kartu-statistik kunci="terbit" label="Surat Diterbitkan" :nilai="$angka($terbit)" keterangan="sudah bernomor" />
 
         {{-- E-S2: tanpa satu pun approved_at, ini "—", bukan "0 menit".
@@ -37,6 +68,16 @@
              satu perpindahan status, bukan satu interaksi (R-S9). --}}
         <x-kartu-statistik kunci="chatbot" label="Permintaan lewat Chatbot" :nilai="$nilaiChatbot"
                            :keterangan="$ketChatbot" :catatan="$catatanChatbot" />
+
+        {{-- Dua pertanyaan yang dijawab chatbot tanpa menghasilkan surat
+             (K-S16). Angkanya sengaja tidak ikut ke panel status maupun ke
+             tren: keduanya tidak meninggalkan satu baris surat pun, jadi
+             menjumlahkannya ke sana akan membuat total surat berbohong. --}}
+        <x-kartu-statistik kunci="tanya-kepsek" label="Tanya Keberadaan Kepsek" :nilai="$nilaiKepsek"
+                           :keterangan="$ketTanya" :catatan="$catatanKepsek" />
+
+        <x-kartu-statistik kunci="tanya-jadwal" label="Tanya Jadwal Agenda" :nilai="$nilaiJadwal"
+                           :keterangan="$ketTanya" :catatan="$catatanJadwal" />
     </div>
 
     <div class="mb-6 grid gap-4 lg:grid-cols-2">

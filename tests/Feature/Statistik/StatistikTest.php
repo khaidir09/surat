@@ -185,6 +185,77 @@ class StatistikTest extends TestCase
         $this->assertSame('2', $this->kartu($this->muat(), 'chatbot'));
     }
 
+    // -- Metrik 8 dan 9: pertanyaan yang dijawab chatbot -----------------------
+
+    public function test_pertanyaan_dihitung_per_jenis_dan_hanya_yang_dijawab(): void
+    {
+        $this->buatTanyaChatbot('tanya_status_kepsek', 3);
+        $this->buatTanyaChatbot('tanya_jadwal', 2);
+
+        // Tercatat tetapi belum terjawab: tidak boleh ikut terhitung. Yang
+        // dijanjikan kartunya adalah pertanyaan yang dijawab bot, bukan
+        // pertanyaan yang masuk.
+        $this->buatTanyaChatbot('tanya_status_kepsek', 4, 'ditanya');
+
+        // Jenis lain di tabel yang sama tidak boleh bocor ke kedua kartu —
+        // maupun sebaliknya: pengajuan surat tetap dihitung dari 'diajukan'.
+        $this->buatPengajuanChatbot('surat_tugas', ['menunggu_ttd']);
+
+        $isi = $this->muat();
+
+        $this->assertSame('3', $this->kartu($isi, 'tanya-kepsek'));
+        $this->assertSame('2', $this->kartu($isi, 'tanya-jadwal'));
+        $this->assertSame('1', $this->kartu($isi, 'chatbot'));
+
+        // Pertanyaan tidak menghasilkan surat, jadi tidak boleh menyentuh
+        // satu pun angka surat.
+        $this->assertSame('0', $this->kartu($isi, 'permintaan'));
+        $this->assertSame('0', $this->kartu($isi, 'terbit'));
+    }
+
+    public function test_jenis_yang_belum_pernah_tercatat_diberi_catatan(): void
+    {
+        // Keadaan produksi hari ini: log terisi, tetapi tidak satu baris pun
+        // berjenis tanya_status_kepsek atau tanya_jadwal. Nol di sini tidak
+        // berarti "belum ada yang bertanya" — ia berarti kita tidak tahu
+        // (E-S16).
+        $this->buatPengajuanChatbot('surat_tugas', ['menunggu_ttd']);
+
+        $isi = $this->muat();
+
+        $this->assertSame('0', $this->kartu($isi, 'tanya-kepsek'));
+        $this->assertStringContainsString('Belum pernah tercatat', $this->catatan($isi, 'tanya-kepsek'));
+        $this->assertStringContainsString('Belum pernah tercatat', $this->catatan($isi, 'tanya-jadwal'));
+
+        // Kartu yang angkanya sah tidak boleh ikut diberi peringatan.
+        $this->assertNull($this->catatan($isi, 'chatbot'));
+    }
+
+    public function test_jenis_tercatat_tanpa_status_dijawab_menyebut_jumlahnya(): void
+    {
+        // Peristiwanya masih dicatat, hanya nama statusnya yang berubah.
+        // Pesannya harus berbeda dari kasus "belum pernah tercatat": yang ini
+        // memberi tahu ada 5 baris yang terlewat, bukan tidak ada apa-apa.
+        $this->buatTanyaChatbot('tanya_jadwal', 5, 'terjawab');
+
+        $catatan = $this->catatan($this->muat(), 'tanya-jadwal');
+
+        $this->assertStringContainsString('Tercatat 5 kali', $catatan);
+        $this->assertStringNotContainsString('Belum pernah', $catatan);
+    }
+
+    public function test_log_yang_kosong_sama_sekali_tidak_memicu_peringatan(): void
+    {
+        // Instalasi baru: nol yang jujur, bukan asumsi basi. Peringatan di
+        // sini hanya akan melatih pembacanya mengabaikan peringatan.
+        $isi = $this->muat();
+
+        $this->assertSame('0', $this->kartu($isi, 'tanya-kepsek'));
+        $this->assertNull($this->catatan($isi, 'tanya-kepsek'));
+        $this->assertNull($this->catatan($isi, 'tanya-jadwal'));
+        $this->assertNull($this->catatan($isi, 'chatbot'));
+    }
+
     // -- Metrik 5: tren harian -------------------------------------------------
 
     public function test_surat_pagi_hari_masuk_ke_tanggal_wita_bukan_hari_sebelumnya(): void
@@ -251,6 +322,28 @@ class StatistikTest extends TestCase
         $this->assertSame(1, $cocok, "Kartu \"$kunci\" tidak ditemukan di halaman.");
 
         return trim($bagian[1]);
+    }
+
+    /**
+     * Catatan peringatan sebuah kartu, atau null bila kartunya tidak punya.
+     *
+     * Dipotong sampai </div> pertama sesudah kaitnya supaya catatan milik
+     * kartu tetangga tidak ikut terbaca — tiga kartu chatbot berdiri
+     * berdampingan dan dua di antaranya bisa sama-sama bercatatan.
+     */
+    private function catatan(string $isi, string $kunci): ?string
+    {
+        $cocok = preg_match(
+            '#data-kartu="' . preg_quote($kunci, '#') . '".*?</div>#s',
+            $isi,
+            $kartu
+        );
+
+        $this->assertSame(1, $cocok, "Kartu \"$kunci\" tidak ditemukan di halaman.");
+
+        return preg_match('#text-amber[^>]*>(.*?)</p>#s', $kartu[0], $bagian)
+            ? trim(html_entity_decode($bagian[1]))
+            : null;
     }
 
     /**

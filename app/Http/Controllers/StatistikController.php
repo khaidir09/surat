@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -24,6 +25,18 @@ class StatistikController extends Controller
     private const JENIS_TUGAS = 'surat_tugas';
 
     private const JENIS_KETERANGAN = 'keterangan_aktif';
+
+    /**
+     * Dua peristiwa chatbot yang dijawab tanpa menghasilkan surat (K-S16).
+     *
+     * Nilainya menghuni kolom log_permintaan.jenis_surat, tetapi keduanya
+     * bukan jenis surat: kolom itu dipakai ulang oleh workflow chatbot untuk
+     * menandai peristiwa apa pun. Namanya mengikuti n8n, bukan sebaliknya —
+     * n8n tidak diubah (K6), jadi ejaan inilah kesepakatannya.
+     */
+    private const TANYA_KEPSEK = 'tanya_status_kepsek';
+
+    private const TANYA_JADWAL = 'tanya_jadwal';
 
     /**
      * Sebuah surat disebut "terbit" bila sudah bernomor, bukan bila statusnya
@@ -183,22 +196,34 @@ class StatistikController extends Controller
     }
 
     /**
-     * Berapa kali surat diajukan lewat chatbot (K-S12).
+     * Tiga angka dari log chatbot: pengajuan surat, pertanyaan tentang
+     * keberadaan kepala sekolah, dan pertanyaan tentang jadwal agenda
+     * (K-S12, K-S16).
      *
      * Bukan count(*): satu baris log_permintaan adalah satu PERPINDAHAN
      * STATUS, bukan satu permintaan — 20 pengajuan meninggalkan 39 baris di
      * produksi. Menghitung seluruh barisnya menghasilkan angka yang benar
-     * secara aritmetika dan salah secara arti (R-S9).
+     * secara aritmetika dan salah secara arti (R-S9). Karena itu setiap
+     * metrik menyebut satu pasangan jenis+status yang mewakili satu
+     * peristiwa: "diajukan" untuk pengajuan surat, "dijawab" untuk
+     * pertanyaan yang sudah terjawab.
+     *
+     * Ketiganya lahir dari SATU query terkelompok, bukan tiga count
+     * terpisah. Ketiga kartu berdiri berdampingan di layar yang sama; angka
+     * yang dibaca dari snapshot berbeda dapat saling bertentangan di sana.
      *
      * Tabel ini milik workflow chatbot dan Laravel tidak punya kesepakatan
      * apa pun atasnya (R-S10). Kegagalannya karena itu ditangkap di sini:
-     * enam metrik lain tidak boleh ikut hilang hanya karena n8n mengganti
-     * nama tabel telemetrinya (E-S14).
+     * metrik surat tidak boleh ikut hilang hanya karena n8n mengganti nama
+     * tabel telemetrinya (E-S14).
      *
-     * @return array{tersedia: bool, jumlah: int, sunyi: bool}
+     * @return array{tersedia: bool, pengajuan: array{jumlah: int, terlihat: int, sunyi: bool}, kepsek: array{jumlah: int, terlihat: int, sunyi: bool}, jadwal: array{jumlah: int, terlihat: int, sunyi: bool}}
      */
     private function permintaanChatbot(): array
     {
+        $kosong = ['jumlah' => 0, 'terlihat' => 0, 'sunyi' => false];
+        $gagal = ['tersedia' => false, 'pengajuan' => $kosong, 'kepsek' => $kosong, 'jadwal' => $kosong];
+
         // Keberadaan tabel diperiksa lebih dulu, bukan disimpulkan dari
         // pengecualian yang dilempar query-nya.
         //
@@ -227,29 +252,73 @@ class StatistikController extends Controller
         if (! Schema::hasTable('public.log_permintaan')) {
             Log::warning('Tabel log_permintaan tidak ditemukan; kartu chatbot dikosongkan.');
 
-            return ['tersedia' => false, 'jumlah' => 0, 'sunyi' => false];
+            return $gagal;
         }
 
         try {
-            $diajukan = DB::table('log_permintaan')->where('status', 'diajukan')->count();
-            $seluruh = DB::table('log_permintaan')->count();
+            // Dikelompokkan di Postgres, bukan diambil mentah lalu dihitung di
+            // PHP: yang berpindah hanya sebanyak pasangan jenis+status yang
+            // ada — empat baris hari ini — bukan seluruh isi log.
+            $baris = DB::table('log_permintaan')
+                ->selectRaw('jenis_surat, status, count(*) as jumlah')
+                ->groupBy('jenis_surat', 'status')
+                ->get();
         } catch (QueryException $e) {
             // Jaring terakhir untuk kegagalan di luar dugaan — hak akses
             // dicabut, kolom status dihapus — yang tidak terjawab hasTable().
             Log::warning('log_permintaan tidak terbaca', ['sebab' => $e->getMessage()]);
 
-            return ['tersedia' => false, 'jumlah' => 0, 'sunyi' => false];
+            return $gagal;
         }
+
+        $seluruh = (int) $baris->sum('jumlah');
 
         return [
             'tersedia' => true,
-            'jumlah' => $diajukan,
 
-            // Log terisi tetapi tidak satu pun bertanda "diajukan" — pertanda
-            // n8n mengganti nama peristiwanya. Angka nol yang muncul karena
-            // asumsi kita basi tidak boleh terlihat sama dengan nol yang
-            // berarti memang belum ada pengajuan (E-S15).
-            'sunyi' => $diajukan === 0 && $seluruh > 0,
+            // Pengajuan sengaja tidak menyaring jenis: jenis surat baru yang
+            // kelak ditambahkan n8n ikut terhitung tanpa menyentuh kode ini.
+            // Dua metrik di bawahnya justru harus menyebut jenisnya, sebab
+            // yang ditanyakan memang peristiwa tertentu.
+            'pengajuan' => $this->metrikLog($baris, null, 'diajukan', $seluruh),
+            'kepsek' => $this->metrikLog($baris, self::TANYA_KEPSEK, 'dijawab', $seluruh),
+            'jadwal' => $this->metrikLog($baris, self::TANYA_JADWAL, 'dijawab', $seluruh),
+        ];
+    }
+
+    /**
+     * Satu metrik dari hasil query terkelompok.
+     *
+     * "terlihat" adalah banyaknya baris berjenis sama TANPA memandang status.
+     * Angka itu tidak pernah ditampilkan sebagai metrik; ia memisahkan dua
+     * sebab nol yang di layar terlihat persis sama (E-S16): jenisnya belum
+     * pernah tercatat sama sekali, atau tercatat tetapi status "dijawab"
+     * bukan lagi nama yang dipakai n8n. Keduanya berarti asumsi kita basi,
+     * dan keduanya harus terbaca berbeda dari "memang belum ada yang
+     * bertanya".
+     *
+     * @param  Collection<int, object>  $baris  hasil group by jenis_surat, status
+     * @param  string|null  $jenis  null berarti seluruh jenis
+     * @return array{jumlah: int, terlihat: int, sunyi: bool}
+     */
+    private function metrikLog(Collection $baris, ?string $jenis, string $status, int $seluruh): array
+    {
+        // whereStrict, bukan where: perbandingan longgar menyamakan null
+        // dengan string kosong, dan jenis_surat maupun status keduanya
+        // nullable serta diisi dari luar Laravel.
+        $sejenis = $jenis === null ? $baris : $baris->whereStrict('jenis_surat', $jenis);
+
+        $jumlah = (int) $sejenis->whereStrict('status', $status)->sum('jumlah');
+
+        return [
+            'jumlah' => $jumlah,
+            'terlihat' => (int) $sejenis->sum('jumlah'),
+
+            // Log terisi tetapi metrik ini nol — pertanda n8n mengganti nama
+            // peristiwanya. Nol yang muncul karena asumsi kita basi tidak
+            // boleh terlihat sama dengan nol yang berarti memang belum ada
+            // (E-S15).
+            'sunyi' => $jumlah === 0 && $seluruh > 0,
         ];
     }
 

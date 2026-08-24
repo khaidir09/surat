@@ -88,6 +88,26 @@ trait MembuatDataSurat
         DB::table('log_permintaan')->insert($baris);
     }
 
+    /**
+     * Pertanyaan yang dijawab chatbot tanpa menghasilkan surat.
+     *
+     * Terpisah dari buatPengajuanChatbot karena bentuknya memang berbeda:
+     * pertanyaan tidak punya daur hidup dan meninggalkan satu baris saja.
+     * Penolong yang menyamakan keduanya akan menyembunyikan justru bedanya
+     * — dan bedanya itulah yang menentukan cara menghitungnya.
+     *
+     * $status dapat diisi selain "dijawab" untuk menirukan pertanyaan yang
+     * tercatat tetapi belum terjawab.
+     */
+    protected function buatTanyaChatbot(string $jenis, int $jumlah = 1, string $status = 'dijawab'): void
+    {
+        DB::table('log_permintaan')->insert(array_fill(0, $jumlah, [
+            'jenis_surat' => $jenis,
+            'status' => $status,
+            'waktu' => now(),
+        ]));
+    }
+
     protected function tugaskanPetugas(int $suratTugasId, int ...$pegawaiId): void
     {
         DB::table('surat_tugas_petugas')->insert(array_map(

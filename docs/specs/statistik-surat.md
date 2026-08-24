@@ -75,6 +75,7 @@ statistik/index.blade.php
 | **K-S15** | **Timezone sesi Postgres wajib sama dengan `config('app.timezone')`**, ditegakkan lewat `'timezone'` pada `config/database.php` | **Ditemukan saat mengerjakan K-S7, 19 Agu 2026.** Laravel mengirim setiap `Carbon` ke PDO sebagai `'Y-m-d H:i:s'` **tanpa offset**; Postgres menafsirkannya memakai timezone sesi. Selama keduanya UTC hal ini tidak terlihat. Begitu `APP_TIMEZONE` menjadi WITA sementara sesi Supabase tetap UTC, **setiap penulisan ke kolom `timestamptz` tersimpan +8 jam di masa depan tanpa galat apa pun** — `app.aktivitas.created_at`, `agenda.created_at`/`updated_at`, dan seluruh `deleted_at`. Terbukti secara empiris, bukan disimpulkan. Pengujian **tidak dapat** menangkapnya: Postgres lokal ber-timezone `Asia/Kuala_Lumpur` yang offsetnya kebetulan sama dengan WITA, sehingga selisihnya nol justru di satu-satunya mesin yang diuji (R-S11) |
 | **K-S13** | **`log_permintaan` dibaca lewat `DB::table()`, tanpa model Eloquent** | Konsisten dengan K-S8 dan dengan `RiwayatController` yang memakai `DB::table()` bahkan untuk tabel yang punya model. Sebuah model yang seumur hidupnya hanya menjawab `count()` adalah berkas yang keberadaannya mengundang pemakaian yang lebih luas dari yang pernah diputuskan. **Bila kelak ada kolom lain yang perlu dibaca, saat itulah model dengan trait `HanyaBaca` dibuat** — bukan sekarang |
 | **K-S14** | **Penolakan tidak diberi kartu angka tersendiri**; ia muncul lewat panel status | Panel status sudah data-driven (K-S2), sehingga `ditolak` beserta jumlahnya tampil sendiri tanpa satu baris kode tambahan. Kartu terpisah akan menduplikasi angka yang sudah ada di layar yang sama. Persentase penolakan sengaja tidak ditampilkan: pada volume sekarang satu penolakan dapat terbaca sebagai angka yang dramatis (RS13) |
+| **K-S16** | **Pertanyaan yang dijawab chatbot ditampilkan sebagai dua kartu terpisah** — keberadaan kepala sekolah dan jadwal agenda — dibaca dari `log_permintaan.jenis_surat` bernilai `tanya_status_kepsek` dan `tanya_jadwal` dengan `status = 'dijawab'` | *Ditambahkan 23 Agu 2026 atas permintaan pemilik sistem.* Keduanya sengaja **tidak** digabung menjadi satu kartu "pertanyaan": yang ingin diketahui pimpinan adalah apakah bot dipakai untuk keperluan yang mana, dan satu angka gabungan justru menghapus perbedaan itu. Keduanya juga **tidak** masuk ke panel status maupun tren harian — tidak satu pun menghasilkan baris surat, sehingga menjumlahkannya ke sana akan membuat total surat berbohong. Batasan `status = 'dijawab'`, bukan seluruh baris berjenis itu, mengikuti alasan yang sama dengan K-S12: yang dijanjikan kartunya adalah pertanyaan yang **terjawab**, bukan yang masuk |
 
 ---
 
@@ -88,7 +89,7 @@ Tidak ada penambahan skema. Seluruh metrik dihitung dari kolom yang sudah ada:
 |---|---|---|
 | `public.surat_tugas` | `no_surat`, `status`, `created_at`, `approved_at` | Metrik 1–6 |
 | `public.surat_keterangan` | `no_surat`, `status`, `created_at` | Metrik 1, 3, 4, 5, 6 |
-| `public.log_permintaan` | `status` saja — **`no_wa` tidak pernah** | Metrik 7 |
+| `public.log_permintaan` | `jenis_surat` dan `status` — **`no_wa` tidak pernah** | Metrik 7, 8, 9 |
 
 Sifat kolom yang menentukan perilaku (dari §5.1 spesifikasi induk dan `database/migrations/uji/2020_01_01_000000_buat_tabel_n8n.php`):
 
@@ -98,6 +99,20 @@ Sifat kolom yang menentukan perilaku (dari §5.1 spesifikasi induk dan `database
 - `surat_keterangan.created_at` `timestamptz` **nullable tanpa default** — inilah bedanya dengan surat tugas, dan ia berkonsekuensi pada tren harian (E-S3)
 - `approved_at` `timestamptz` nullable pada kedua tabel, diisi oleh n8n. **Terverifikasi terisi 19 Agu 2026** — 17 dari 18 surat tugas; satu sisanya memang masih `menunggu`
 - `log_permintaan` — kolomnya `id`, `waktu`, `no_wa` bigint, `jenis_surat` text, `status` text, `durasi_proses_detik` integer. **39 baris per 19 Agu 2026**, `durasi_proses_detik` seluruhnya NULL. Satu baris = **satu perpindahan status**, bukan satu permintaan. Nilai `status` yang terlihat: `diajukan` (20), `menunggu_ttd` (17), `diterbitkan` (2). Nilai `jenis_surat` memakai kosakata webhook n8n (`surat_tugas`, `keterangan_aktif`), bukan nama tabel
+
+**Pengukuran ulang 23 Agu 2026**, saat metrik 8 dan 9 ditambahkan. Masih 39 baris, dan seluruhnya terbagi ke empat pasangan jenis+status saja:
+
+| `jenis_surat` | `status` | Baris | Rentang `waktu` |
+|---|---|---:|---|
+| `surat_tugas` | `diajukan` | 19 | 3 Jul – 21 Agu 2026 |
+| `surat_tugas` | `menunggu_ttd` | 18 | 3 Jul – 21 Agu 2026 |
+| `keterangan_aktif` | `diajukan` | 1 | 13 Jul 2026 |
+| `keterangan_aktif` | `diterbitkan` | 1 | 13 Jul 2026 |
+
+Dua hal yang langsung mengikutinya:
+
+- **`tanya_status_kepsek` dan `tanya_jadwal` belum pernah muncul, dan status `dijawab` juga belum pernah muncul.** Nilainya diketahui dari pemilik sistem, bukan dari baris sungguhan — keadaan yang sama persis dengan `ditolak` pada §16.3. Kedua kartu baru karenanya akan menampilkan `0` sampai workflow chatbot benar-benar mencatatnya. Nol itu **tidak boleh terbaca sebagai "belum ada yang bertanya"**; lihat E-S16
+- **Rentang `log_permintaan` ternyata sejak 3 Juli**, bukan dua hari sebagaimana tercatat pada §16.5 sebelum koreksi ini
 
 ### 4.2 Bentuk query
 
@@ -152,13 +167,19 @@ Satu-satunya kolom yang disebut adalah `status`, dan satu-satunya nilai yang dic
 | **2** | Rata-rata Waktu Proses Surat Tugas | Kartu angka | `surat_tugas` | Rata-rata `approved_at − created_at`, ditampilkan dalam satuan yang terbaca manusia (E-S2, E-S9, E-S10) |
 | **3** | Total Permintaan Masuk | Kartu angka | Kedua tabel surat | Jumlah seluruh baris, tanpa penyaringan. Disandingkan dengan metrik 1 sehingga selisihnya terlihat |
 | **7** | Permintaan lewat Chatbot | Kartu angka | `log_permintaan` | Jumlah baris berstatus `diajukan` (K-S12). **Label bukan "Total Interaksi Bot"** — satu baris bukan satu interaksi, lihat R-S9 |
+| **8** | Tanya Keberadaan Kepsek | Kartu angka | `log_permintaan` | Baris dengan `jenis_surat = 'tanya_status_kepsek'` **dan** `status = 'dijawab'` (K-S16) |
+| **9** | Tanya Jadwal Agenda | Kartu angka | `log_permintaan` | Baris dengan `jenis_surat = 'tanya_jadwal'` **dan** `status = 'dijawab'` (K-S16) |
 
 **Metrik 6 tidak memakai kanvas.** §9 semula membayangkan tiga grafik, tetapi panel status sudah berupa batang HTML/CSS yang terbaca tanpa JavaScript. Menggantinya dengan kanvas Chart.js akan menghapus properti E-S11 yang sudah dimiliki, demi tampilan yang tidak lebih informatif. Kanvas hanya dipakai di tempat yang HTML polos memang tidak sanggup: donat dan garis.
 | **4** | Komposisi per Jenis | Grafik donat | Kedua tabel surat | Pecahan dari metrik 1: surat tugas vs surat keterangan (K-S4) |
 | **5** | Tren Harian | Grafik garis, 2 seri | Kedua tabel surat | Jumlah permintaan masuk per hari WITA, 30 hari terakhir termasuk hari ini |
 | **6** | Status Surat Saat Ini | Grafik batang + tabel | Kedua tabel surat | `count(*) group by status` dari kedua tabel digabung, seluruh nilai apa adanya (K-S2) |
 
-Nomor metrik mengikuti urutan pembahasan, bukan urutan tampilan; metrik 7 ditambahkan belakangan dan tampil sebagai kartu keempat. Penomoran sengaja tidak diurutkan ulang supaya rujukan di §14 dan §15 tetap menunjuk hal yang sama.
+Nomor metrik mengikuti urutan pembahasan, bukan urutan tampilan; metrik 7 ditambahkan belakangan dan tampil sebagai kartu keempat, metrik 8 dan 9 lebih belakangan lagi sebagai kartu kelima dan keenam. Penomoran sengaja tidak diurutkan ulang supaya rujukan di §14 dan §15 tetap menunjuk hal yang sama.
+
+**Metrik 7, 8, dan 9 lahir dari satu query terkelompok**, bukan tiga `count()` terpisah. Ketiganya berdiri berdampingan di layar yang sama, dan angka yang dibaca dari snapshot berbeda dapat saling bertentangan di sana. Biayanya nol: `group by jenis_surat, status` atas 39 baris mengembalikan empat baris.
+
+**Metrik 8 dan 9 tidak menyentuh satu pun angka surat.** Keduanya tidak menghasilkan baris di `surat_tugas` maupun `surat_keterangan`, sehingga tidak muncul di metrik 1, 3, 4, 5, maupun 6. Ini bukan kelalaian melainkan syarat: menjumlahkan pertanyaan ke dalam "Permintaan Masuk" akan membuat angka surat berbohong.
 
 **Catatan pada metrik 3:** ia tidak ada di permintaan awal, tetapi tanpanya metrik 1 tidak dapat ditafsirkan. "142 surat diterbitkan" berarti sangat berbeda bila permintaan yang masuk 145 dibanding 400. Ia juga gratis — query-nya bagian dari metrik yang sama. Sejak nilai `ditolak` diketahui, selisih metrik 3 dan metrik 1 kini dapat dijelaskan seluruhnya: ia terdiri dari surat yang **ditolak** dan surat yang **masih menunggu**, dan keduanya terbaca angkanya di panel status.
 
@@ -255,12 +276,19 @@ Asimetrinya mudah terlewat: `DB::table('log_permintaan')` di baris berikutnya **
 ```
 ┌─ Statistik ─────────────────────────────────────────────────────────────┐
 │                                                                          │
-│ ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐              │
-│ │ Surat      │ │ Rata-rata  │ │ Permintaan │ │ Permintaan │              │
-│ │ Diterbitkan│ │ Waktu Proses│ │ Masuk      │ │ lewat Chatbot│            │
-│ │     18     │ │  3 jam 12 m │ │     19     │ │     20     │              │
-│ │sudah bernomor│ │dari 17 surat│ │seluruh riwayat│ │tercatat di log n8n│    │
-│ └────────────┘ └────────────┘ └────────────┘ └────────────┘              │
+│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐                       │
+│ │ Surat        │ │ Rata-rata    │ │ Permintaan   │                       │
+│ │ Diterbitkan  │ │ Waktu Proses │ │ Masuk        │                       │
+│ │      18      │ │  3 jam 12 m  │ │      19      │                       │
+│ │sudah bernomor│ │dari 17 surat │ │seluruh riwayat│                      │
+│ └──────────────┘ └──────────────┘ └──────────────┘                       │
+│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐                       │
+│ │ Permintaan   │ │ Tanya        │ │ Tanya Jadwal │                       │
+│ │ lewat Chatbot│ │ Keberadaan   │ │ Agenda       │                       │
+│ │      20      │ │ Kepsek   0   │ │      0       │                       │
+│ │tercatat di   │ │dijawab chatbot│ │dijawab chatbot│                     │
+│ │log n8n       │ │⚠ Belum pernah│ │⚠ Belum pernah│                       │
+│ └──────────────┘ └──────────────┘ └──────────────┘                       │
 │                                                                          │
 │ ┌── Komposisi per Jenis ────┐ ┌── Status Surat Saat Ini ──────────────┐  │
 │ │                           │ │  selesai        ████████ 138          │  │
@@ -295,6 +323,10 @@ Nilai heksadesimalnya ditulis di JSON yang dicetak controller, bukan dibaca dari
 
 ---
 
+**Tiga kolom, bukan empat.** Enam kartu di atas kisi empat kolom menyisakan baris kedua yang setengah kosong; kisi tiga kolom membaginya menjadi dua baris penuh yang kebetulan — dan sengaja dipertahankan — persis memisahkan **angka surat** (baris pertama) dari **angka chatbot** (baris kedua). Pengelompokan itu bukan kerapian belaka: ketiga kartu bawah berbagi satu sumber, `log_permintaan`, dan menghilang bersama-sama bila tabelnya tidak terbaca (E-S14). Urutan kartunya tidak perlu diubah sama sekali untuk mendapatkannya.
+
+**Peringatan "⚠" pada sketsa** adalah catatan kuning pada `x-kartu-statistik` (`:catatan`), bukan ikon. Ia hanya muncul bila E-S16 terpenuhi, dan hilang sendiri begitu n8n mulai mencatat peristiwanya.
+
 ## 10. Di luar scope
 
 1. **Waktu proses sampai surat ditandatangani/selesai** (K-S9).
@@ -326,10 +358,11 @@ Nilai heksadesimalnya ditulis di JSON yang dicetak controller, bukan dibaca dari
 | **E-S8** | **Hari tanpa satu pun surat** di dalam rentang 30 hari | Muncul sebagai titik bernilai `0`, bukan dilewati. Deret 30 hari dibangun di PHP dan diisi dari hasil query, bukan diambil apa adanya dari SQL |
 | **E-S9** | **Rata-rata di bawah satu menit** | Ditampilkan dalam detik ("48 detik"), bukan "0 menit" |
 | **E-S10** | **Rata-rata lebih dari 24 jam** | Ditampilkan dalam hari dan jam ("2 hari 5 jam"), bukan "53 jam" |
-| **E-S11** | **JavaScript mati atau Chart.js gagal dimuat** | Keempat angka pada kartu dan **tabel status tetap terbaca** — tabel status dirender Blade, bukan digambar Chart.js. Grafiknya hilang; halamannya tidak |
+| **E-S11** | **JavaScript mati atau Chart.js gagal dimuat** | Keenam angka pada kartu dan **tabel status tetap terbaca** — tabel status dirender Blade, bukan digambar Chart.js. Grafiknya hilang; halamannya tidak |
 | **E-S12** | **Supabase tidak dapat dihubungi** | Sama seperti halaman lain yang membaca database langsung: error 500 bawaan Laravel. Berbeda dari `/antrean` yang menangkap `N8nException` — di sana sumbernya webhook yang memang bisa mati sendiri, di sini database yang matinya berarti seluruh aplikasi mati |
 | **E-S13** | **`log_permintaan` kosong** | Kartu menampilkan `0`. Bukan "—": nol permintaan adalah fakta yang terukur, berbeda dari rata-rata yang tidak dapat dihitung (E-S2) |
 | **E-S15** | **n8n mengganti nama peristiwa `diajukan`** | Angkanya jatuh ke `0` sementara `log_permintaan` terus terisi. Ini **tidak boleh tersamar**: bila metrik 7 bernilai 0 padahal tabelnya berisi baris, kartu menampilkan keterangan "log terisi tetapi tidak ada yang bertanda `diajukan`". Satu-satunya tempat di halaman ini yang membandingkan hasil query dengan keberadaan datanya sendiri — dan ia ada justru karena literal `'diajukan'` adalah asumsi yang disengaja (§4.2) |
+| **E-S16** | **Metrik 8 atau 9 bernilai nol.** Keadaan produksi 23 Agu 2026: `tanya_status_kepsek` dan `tanya_jadwal` belum pernah tercatat sekali pun | Nol di sini punya **dua sebab yang di layar terlihat persis sama**, dan keduanya harus terbaca berbeda dari "memang belum ada yang bertanya". Bila log berisi baris tetapi jenis itu belum pernah muncul sama sekali: *"Belum pernah tercatat di log. Nama peristiwanya mungkin berbeda di n8n."* Bila jenisnya muncul tetapi tidak satu pun berstatus `dijawab`: *"Tercatat n kali, tetapi tidak satu pun bertanda `dijawab`."* — kalimat kedua menyebut angkanya, supaya pembacanya tahu ada berapa baris yang terlewat. **Log yang kosong sama sekali tidak memicu peringatan apa pun**: pada instalasi baru, nol adalah jawaban yang jujur, dan peringatan yang selalu menyala hanya melatih pembacanya mengabaikan peringatan |
 | **E-S14** | **`log_permintaan` tidak ada di database** — misalnya n8n memindahkan atau mengganti namanya | Query melempar `QueryException` dan **seluruh halaman jatuh 500**, padahal enam metrik lain baik-baik saja. Kartu ini karenanya dibungkus penanganan tersendiri: bila query gagal, kartu menampilkan "—" dengan keterangan "tidak tersedia" sementara sisa halaman tetap tampil. Ini satu-satunya tabel yang Laravel baca tanpa pernah punya jaminan atasnya (R-S9) |
 
 ---
@@ -362,6 +395,17 @@ Nilai heksadesimalnya ditulis di JSON yang dicetak controller, bukan dibaca dari
 
 - `data-kartu="…"` pada nilai setiap kartu (`components/kartu-statistik.blade.php`). Tanpanya tes harus mencocokkan kelas Tailwind, sehingga setiap perubahan tampilan memerahkan tes yang sebenarnya menguji angka.
 - `buatPengajuanChatbot()` pada `Tests\Dukungan\MembuatDataSurat`, yang sengaja menyisipkan **lebih dari satu baris** per pengajuan. Penolong yang menyisipkan satu baris saja akan membuat metrik 7 hijau untuk bentuk data yang di produksi tidak pernah ada.
+
+**Ditambahkan 23 Agu 2026 bersama metrik 8 dan 9** — empat test, suite naik dari 143 ke **147 hijau**:
+
+| Test | Yang dijaganya |
+|---|---|
+| `test_pertanyaan_dihitung_per_jenis_dan_hanya_yang_dijawab` | Kedua jenis tidak saling bocor, baris berstatus selain `dijawab` tidak ikut terhitung, dan pengajuan surat tetap dihitung dari `diajukan`. Sekaligus memastikan pertanyaan **tidak menyentuh** kartu "Permintaan Masuk" maupun "Surat Diterbitkan" |
+| `test_jenis_yang_belum_pernah_tercatat_diberi_catatan` | Keadaan produksi hari ini, dijadikan test: log terisi tetapi kedua jenis belum pernah muncul. Kartu bercatatan, dan kartu yang angkanya sah **tidak** ikut bercatatan |
+| `test_jenis_tercatat_tanpa_status_dijawab_menyebut_jumlahnya` | Kalimat yang kedua (E-S16), beserta angka baris yang terlewat |
+| `test_log_yang_kosong_sama_sekali_tidak_memicu_peringatan` | Sisi negatifnya. Tanpa test ini, peringatan yang selalu menyala akan lolos |
+
+Kait ketiga yang lahir bersamanya: penolong `catatan()` pada test, yang memotong HTML sampai `</div>` pertama sesudah `data-kartu` supaya catatan kartu tetangga tidak ikut terbaca — tiga kartu chatbot berdiri berdampingan dan dua di antaranya bisa sama-sama bercatatan. Serta `buatTanyaChatbot()` pada `MembuatDataSurat`, sengaja **terpisah** dari `buatPengajuanChatbot()`: pertanyaan tidak punya daur hidup dan meninggalkan satu baris saja, dan beda bentuk itulah yang menentukan cara menghitungnya.
 
 **Test batas hari WITA sudah dibuktikan bukan test kosong:** dengan `APP_TIMEZONE` diubah sementara ke `UTC`, ia gagal tepat pada kasusnya — surat 07:30 WITA mendarat di tanggal sebelumnya. Pembuktian itu perlu diulang bila ekspresi tanggalnya pernah disentuh lagi.
 
@@ -410,6 +454,11 @@ Cara membaca angka dari halaman untuk pengujian: blok `<script type="application
 - [ ] Jumlah seluruh angka di panel status sama dengan "Total Permintaan Masuk"
 - [ ] "Permintaan lewat Chatbot" sama dengan `select count(*) from log_permintaan where status = 'diajukan'`
 - [ ] Kartu itu **tidak** berlabel "Total Interaksi Bot" dan tidak menampilkan `count(*)` polos (R-S9)
+- [ ] "Tanya Keberadaan Kepsek" sama dengan `select count(*) from log_permintaan where jenis_surat = 'tanya_status_kepsek' and status = 'dijawab'` (K-S16)
+- [ ] "Tanya Jadwal Agenda" sama dengan query yang sama dengan `jenis_surat = 'tanya_jadwal'`
+- [ ] Baris berjenis itu yang statusnya **bukan** `dijawab` tidak ikut terhitung
+- [ ] Kedua kartu **tidak** mengubah "Total Permintaan Masuk", "Total Surat Diterbitkan", panel status, maupun tren harian
+- [ ] Nol pada kedua kartu disertai catatan bila `log_permintaan` berisi baris lain (E-S16), dan **tanpa** catatan bila log memang kosong
 
 ### AC-S3 Tren harian
 - [ ] Selalu tepat 30 titik, berakhir pada hari ini menurut WITA
@@ -534,7 +583,11 @@ Pemilik sistem menyatakan nilainya `ditolak` dan barisnya dipertahankan. Query 1
 **16.4 Apakah tahun ajaran perlu menjadi satuan waktu nanti.**
 Rilis pertama memakai kalender (30 hari terakhir, sepanjang waktu). Bila pimpinan ternyata berpikir dalam tahun ajaran, batas tahun ajarannya harus ditentukan — informasi itu tidak ada di mana pun di database.
 
-**16.5 Rentang `log_permintaan` hanya dua hari** (18–19 Agu 2026). Tabelnya tampak baru atau pernah dibersihkan. Konsekuensinya: metrik 7 tidak sebanding dengan metrik 1 dan 3 yang mencakup sejak Juli. **Keterangan pada kartunya wajib menyebut hal ini** selama rentangnya masih jauh lebih pendek daripada riwayat surat.
+**16.5 Rentang `log_permintaan` — KELIRU, dikoreksi 23 Agu 2026.**
+Catatan semula menyebut rentangnya hanya dua hari (18–19 Agu 2026) dan menyimpulkan metrik 7 tidak sebanding dengan metrik 1 dan 3. Pengukuran ulang saat menambahkan metrik 8 dan 9 menunjukkan `min(waktu) = 3 Jul 2026` dan `max(waktu) = 21 Agu 2026` — rentangnya **sama panjang** dengan riwayat surat. Kewajiban mencantumkan keterangan rentang pada kartunya karenanya **gugur**, dan tidak pernah sempat diterapkan.
+
+**16.6 `tanya_status_kepsek`, `tanya_jadwal`, dan status `dijawab` belum pernah terlihat di data.**
+Ketiganya diketahui dari pemilik sistem (23 Agu 2026), bukan dari baris sungguhan — keadaan yang sama persis dengan `ditolak` pada §16.3. Query 23 Agu 2026 atas seluruh 39 baris `log_permintaan` tidak menemukan satu pun. **Tidak memblokir:** kedua kartu menampilkan `0` beserta catatan yang menyebut kemungkinan namanya berbeda (E-S16), dan catatan itu hilang sendiri begitu n8n mulai mencatatnya. Yang belum dapat dipastikan tanpa membuka workflow n8n — yang menurut K6 tidak disentuh — adalah apakah ejaannya memang persis begitu. **Pemeriksaannya murah:** satu pertanyaan lewat chatbot, lalu `select distinct jenis_surat, status from log_permintaan`. Selama itu belum dilakukan, angka `0` pada kedua kartu tidak boleh dibaca sebagai "belum ada yang bertanya".
 
 ---
 
@@ -566,6 +619,8 @@ Rilis pertama memakai kalender (30 hari terakhir, sepanjang waktu). Bila pimpina
 6. ✅ **SELESAI 19 Agu 2026.** Menu sidebar, ikon, `rutaBeranda()`, dan penyesuaian `LoginTest` yang ditunda dari langkah 5 — perilaku dan tesnya berpindah dalam satu commit. Route sudah dikerjakan di langkah 4. **V-S2 lulus seluruhnya**, dijalankan sekali lewat berkas sementara yang kemudian dihapus
 7. ✅ **SELESAI 19 Agu 2026.** Chart.js 4.5.1, entry Vite tersendiri, `resources/js/statistik.js`, dan **dua kanvas — bukan tiga**. Panel status tetap batang HTML/CSS: ia sudah terbaca tanpa JavaScript, dan menggantinya dengan kanvas akan menghapus properti yang sudah ada (E-S11) tanpa menambah apa pun. Bundel `statistik.js` **57,7 kB gzip**, dimuat **hanya** di `/statistik`
 8. **Sebagian selesai 19 Agu 2026.** **V-S3 lulus** — dan menemukan dua cacat yang tidak terlihat oleh suite: `Schema::hasTable()` yang selalu menjawab `false` (§8.2.2) dan transaksi Postgres yang teracuni. **V-S4 lulus seluruhnya**, keenam pemeriksaan silang cocok terhadap data produksi. **V-S5 sebagian**; sisanya menuntut peramban. **V-S1 langkah 3 menemukan `app.aktivitas` yang tergeser** — lihat §16.1
+
+9. ✅ **SELESAI 23 Agu 2026.** Metrik 8 dan 9 — dua kartu pertanyaan chatbot (K-S16). `permintaanChatbot()` diubah dari dua `count()` menjadi satu query terkelompok yang melahirkan ketiga angka sekaligus, kisi kartu menjadi tiga kolom sehingga baris pertama berisi angka surat dan baris kedua angka chatbot, dan E-S16 dibuatkan dua kalimat catatan yang berbeda. Empat test baru, suite naik dari 143 ke **147 hijau**. **Tidak ada satu pun baris produksi yang cocok dengan kedua jenis itu hari ini** — lihat §16.6
 
 Langkah 4 sengaja mendahului langkah 7, dengan alasan yang sama seperti §17 spesifikasi induk menempatkan riwayat sebelum antrean: bagian yang tidak bergantung pada hal baru dikerjakan lebih dulu, supaya ketika yang baru diperkenalkan, hanya ada satu tersangka.
 
