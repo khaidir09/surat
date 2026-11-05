@@ -1,0 +1,204 @@
+{
+  "name": "6 - Surat Selesai",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "surat-selesai",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://sapa.smkn1amuntai.sch.id"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -416,
+        96
+      ],
+      "id": "8852d49a-4302-444d-98e9-1ae67abb5f02",
+      "name": "Webhook",
+      "webhookId": "d9829ccf-100e-48ef-a34b-18de8040f761"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "44758273-019b-4d8f-a9d2-c81c4e18964e",
+              "leftValue": "={{ $json.headers['x-dashboard-secret'] }}",
+              "rightValue": "Smkn1amuntaikompak",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -208,
+        96
+      ],
+      "id": "ff9d9f79-47e7-4828-8327-7149010d3e5f",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "401",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        192
+      ],
+      "id": "94b0660f-6e11-44dd-968b-23c964706e6b",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"ok\": true }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        208,
+        0
+      ],
+      "id": "f783bb3e-1e6f-4a51-9b9a-f629a286e3ff",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE surat_tugas\nSET status = 'selesai'\nWHERE id = $1::int AND status = 'menunggu_ttd'\nRETURNING id, pemohon_wa;",
+        "options": {
+          "queryReplacement": "=={{ [ $json.body.id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        0,
+        0
+      ],
+      "id": "30155942-72ff-4b3f-b55a-46e37ffb4087",
+      "name": "Tandai Selesai",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Tandai Selesai').item.json.pemohon_wa }}",
+        "text": "={{ 'Surat Tugas #ST-' + $('Tandai Selesai').item.json.id + ' telah ditandatangani Kepala Sekolah dan sudah bisa diambil di ruang Tata Usaha. Terima kasih.' }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "fb9719d9-0d33-44af-84d6-d1a9f42a3929",
+      "name": "Send a text message",
+      "webhookId": "b3e8e66f-748a-4f87-ad87-d9f66a0c812e",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Tandai Selesai",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tandai Selesai": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "090033ba-89ce-42c1-b44d-4e4cc9de981e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "43c96b39764730a7964ffd98009f1a5bd1af5b0e9f69f8847fd80450eec1c0ee"
+  },
+  "nodeGroups": [],
+  "id": "BwihTtahUqO9CHt0",
+  "tags": []
+}

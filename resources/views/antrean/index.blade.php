@@ -36,9 +36,17 @@
                 @csrf
                 <input type="hidden" name="aksi" value="setujui">
                 <input type="hidden" name="nomor" value="{{ $k['nomor'] }}">
+                {{-- Tanggal yang tadi diketik ikut dibawa; tanpa ini konfirmasi
+                     duplikat akan diam-diam mengembalikannya ke hari ini. --}}
+                <input type="hidden" name="tanggal" value="{{ $k['tanggal'] }}">
                 <input type="hidden" name="abaikan_duplikat" value="1">
                 <button type="submit" class="rounded-lg bg-amber px-4 py-2 text-sm font-medium text-white hover:opacity-90">
                     Tetap setujui dengan nomor {{ $k['nomor'] }}
+                    @if ($k['tanggal'])
+                        <span class="font-normal">
+                            tanggal {{ \Illuminate\Support\Carbon::parse($k['tanggal'])->translatedFormat('j M Y') }}
+                        </span>
+                    @endif
                 </button>
             </form>
 

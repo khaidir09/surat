@@ -103,6 +103,31 @@ return [
             //                         perlu menulis prefix schema
             'search_path' => env('DB_SEARCH_PATH', 'app,public'),
 
+            // WAJIB sama dengan config('app.timezone'). Bukan kerapian —
+            // sebuah invarian.
+            //
+            // Laravel mengirim setiap Carbon ke PDO sebagai string
+            // "Y-m-d H:i:s" TANPA offset. Postgres menafsirkannya memakai
+            // timezone sesi. Bila keduanya berbeda, setiap penulisan ke kolom
+            // timestamptz tersimpan bergeser sebesar selisihnya, tanpa galat
+            // apa pun: app.aktivitas.created_at, agenda.created_at, dan
+            // seluruh deleted_at akan mencatat waktu yang tidak pernah
+            // terjadi.
+            //
+            // Terbukti 19 Agu 2026: dengan APP_TIMEZONE=Asia/Makassar dan
+            // sesi Supabase pada UTC (bawaannya), baris yang ditulis Eloquent
+            // mendarat +8 jam di masa depan. Pengujian tidak dapat
+            // menangkapnya — Postgres lokal kebetulan ber-timezone
+            // Asia/Kuala_Lumpur yang offsetnya sama dengan WITA, sehingga
+            // selisihnya nol justru pada satu-satunya mesin yang diuji.
+            //
+            // Menyetelnya di sini sekaligus membuat whereYear(), whereDate(),
+            // dan ::date di sisi SQL dihitung menurut WITA. Query statistik
+            // tetap menulis "at time zone 'Asia/Makassar'" secara eksplisit
+            // (R-S3): ekspresi itu tidak bergantung pada timezone sesi, jadi
+            // ia tetap benar dan tidak menggeser dua kali.
+            'timezone' => env('DB_TIMEZONE', env('APP_TIMEZONE', 'UTC')),
+
             // Supabase mewajibkan TLS; "prefer" akan diam-diam jatuh ke
             // koneksi tanpa enkripsi bila negosiasi gagal.
             'sslmode' => env('DB_SSLMODE', 'require'),

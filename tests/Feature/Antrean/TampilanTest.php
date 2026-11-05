@@ -119,6 +119,35 @@ class TampilanTest extends TestCase
             ->assertDontSee('Setujui &amp; terbitkan', escape: false);
     }
 
+    /**
+     * Tanggal surat terisi hari ini karena itulah yang benar hampir setiap
+     * kali, tetapi tetap sebagai input yang dapat diubah — bukan nilai mati.
+     */
+    public function test_kartu_keputusan_menyediakan_tanggal_terisi_hari_ini(): void
+    {
+        $this->antrean([
+            ['id' => 7, 'jenis' => 'surat_tugas', 'status' => 'menunggu'],
+        ]);
+
+        $this->actingAs($this->tas())->get('/antrean')
+            ->assertOk()
+            ->assertSee('Tanggal surat')
+            ->assertSee('name="tanggal" type="date"', escape: false)
+            ->assertSee('value="' . now()->toDateString() . '"', escape: false);
+    }
+
+    /** Kartu menunggu TTD tidak memutuskan apa pun, jadi tanpa isian tanggal. */
+    public function test_kartu_menunggu_ttd_tanpa_isian_tanggal(): void
+    {
+        $this->antrean([
+            ['id' => 8, 'jenis' => 'surat_tugas', 'status' => 'menunggu_ttd'],
+        ]);
+
+        $this->actingAs($this->tas())->get('/antrean')
+            ->assertOk()
+            ->assertDontSee('Tanggal surat');
+    }
+
     /** AC-1: kredensial server tidak boleh sampai ke browser. */
     public function test_secret_tidak_muncul_di_halaman(): void
     {

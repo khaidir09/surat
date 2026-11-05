@@ -75,9 +75,15 @@ class User extends Authenticatable
     /**
      * Halaman awal setiap role. Kepsek tidak punya akses ke antrean
      * persetujuan, jadi tidak boleh didaratkan di sana.
+     *
+     * Kepsek mendarat di statistik, bukan riwayat: riwayat adalah daftar
+     * terpaginasi 25 baris — alat pencarian, bukan alat pemantauan. TAS tetap
+     * mendarat di antrean, karena itulah pekerjaan hariannya; mendaratkannya
+     * di ringkasan akan menambah satu klik pada alur yang dipakai puluhan
+     * kali sehari (K-S11 pada docs/specs/statistik-surat.md).
      */
     public function rutaBeranda(): string
     {
-        return $this->adalahTas() ? route('antrean.index') : route('riwayat.index');
+        return $this->adalahTas() ? route('antrean.index') : route('statistik.index');
     }
 }

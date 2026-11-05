@@ -51,13 +51,23 @@ class N8nClient
     /**
      * @return array<string, mixed>
      */
-    public function putuskan(int $id, string $jenis, string $aksi, ?string $nomor = null): array
-    {
+    public function putuskan(
+        int $id,
+        string $jenis,
+        string $aksi,
+        ?string $nomor = null,
+        ?string $tanggal = null,
+    ): array {
         return $this->kirim('post', $this->endpoint['keputusan'], [
             'id' => $id,
             'jenis' => $jenis,
             'aksi' => $aksi,
             'nomor' => $nomor,
+
+            // Kuncinya selalu ikut, bernilai null bila dilewati — sama seperti
+            // yang dikirim dashboard lama (index.html:651-675). n8n yang
+            // memutuskan artinya: null berarti tanggal hari ini.
+            'tanggal' => $tanggal,
         ]);
     }
 

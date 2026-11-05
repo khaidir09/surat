@@ -19,6 +19,20 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+
+        <!--
+            Dipatok di sini, bukan diwarisi dari .env milik masing-masing
+            mesin. Tes yang memeriksa batas hari WITA harus memberi hasil yang
+            sama di mana pun ia dijalankan; tanpa ini, mesin yang .env-nya
+            belum memuat APP_TIMEZONE akan menjalankannya pada UTC dan gagal
+            karena alasan yang tidak terlihat dari berkas tesnya.
+
+            Nilai ini juga menjadi timezone sesi Postgres lewat
+            config/database.php — keduanya wajib sama. Alasannya panjang dan
+            ada di sana.
+        -->
+        <env name="APP_TIMEZONE" value="Asia/Makassar"/>
+
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>

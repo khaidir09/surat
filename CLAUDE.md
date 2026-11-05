@@ -16,7 +16,7 @@ php artisan migrate       # writes to Supabase — read "Migrations" first
 
 **All identifiers and UI copy are Indonesian**: `muatDaftar`, `putuskan`, `kartuAntrean`, `PastikanRole`, `HanyaBaca`, `namaTampil()`, `daftarKelas()`. Laravel's own conventions stay English (`User`, `boot`, `casts`). Keep both.
 
-The design decisions behind everything here are recorded in **`docs/specs/dashboard-laravel-surat.md`** as K1–K12 (decisions), E1–E18 (edge cases), and RS1–RS15 (risks). Comments in the code cite them by number. Read that file before changing behaviour; it explains *why*, which the code cannot.
+The design decisions behind everything here are recorded in **`docs/specs/dashboard-laravel-surat.md`** as K1–K12 (decisions), E1–E18 (edge cases), and RS1–RS15 (risks). Comments in the code cite them by number. Read that file before changing behaviour; it explains _why_, which the code cannot.
 
 ## The core constraint: n8n owns the letters
 
@@ -24,18 +24,18 @@ n8n at `https://n8n.dewakreatif.com/webhook` holds all letter logic — approval
 
 Everything Laravel does is arranged around that:
 
-| Concern | Owner |
-| --- | --- |
-| Letter status, numbering, PDFs, notifications | n8n |
-| Reading letters for display | Laravel (Eloquent, read-only) |
-| `pegawai`, `siswa`, `agenda` CRUD | **Laravel only** — n8n merely reads them (K3) |
-| Who did what | `app.aktivitas` (K7) |
+| Concern                                       | Owner                                         |
+| --------------------------------------------- | --------------------------------------------- |
+| Letter status, numbering, PDFs, notifications | n8n                                           |
+| Reading letters for display                   | Laravel (Eloquent, read-only)                 |
+| `pegawai`, `siswa`, `agenda` CRUD             | **Laravel only** — n8n merely reads them (K3) |
+| Who did what                                  | `app.aktivitas` (K7)                          |
 
 All five webhooks are wrapped by `App\Services\N8nClient`. Never call `Http::` against n8n from a controller (AC-6). Payload shapes copy the old dashboard exactly, including sending `''` rather than `null` for skipped fields — n8n is not changed, so the request must not change either.
 
 Two response shapes were confirmed against the live service and are easy to get wrong: `/surat-pending` replies `{"items": [...]}`, and `/surat-pdf` sometimes wraps its reply in a single-element array. `N8nClient` normalises both.
 
-`N8nUnauthorizedException` deliberately **does not extend** `N8nException`. Controllers catch `N8nException` to show an in-form failure; a 401 means the *server's* `N8N_SECRET` is wrong, not the user's doing, so it renders its own page and never logs anyone out (E2). This differs from `kunciUlang()` in the old dashboard, where the access code belonged to the user.
+`N8nUnauthorizedException` deliberately **does not extend** `N8nException`. Controllers catch `N8nException` to show an in-form failure; a 401 means the _server's_ `N8N_SECRET` is wrong, not the user's doing, so it renders its own page and never logs anyone out (E2). This differs from `kunciUlang()` in the old dashboard, where the access code belonged to the user.
 
 ## PDFs
 
@@ -82,7 +82,7 @@ At least one active `tas` account must always remain; `PenggunaController` block
 
 `resources/views/antrean/index.blade.php` is the highest-risk file. Two things there exist because of specific failures:
 
-**Never disable form controls on submit.** The busy indicator originally disabled every button in the card, including the one being pressed; browsers omit disabled controls from the payload, so `aksi` vanished and *every* decision failed. It now marks the form and dims the card instead.
+**Never disable form controls on submit.** The busy indicator originally disabled every button in the card, including the one being pressed; browsers omit disabled controls from the payload, so `aksi` vanished and _every_ decision failed. It now marks the form and dims the card instead.
 
 **Unknown `jenis`/`status` combinations must stay visible.** `render()` in the old dashboard kept exactly three pairs and dropped the rest silently, so one typo in n8n could lose a request with no trace. The "Status tidak dikenal" section catches the remainder, and a test compares the section totals against the count n8n returned.
 
@@ -98,7 +98,7 @@ There is no 30-second auto-refresh. The old dashboard had one, but numbers are n
 
 ## Localisation
 
-`APP_LOCALE=id`, `APP_FALLBACK_LOCALE=en`. The fallback is deliberately *not* `id`: with both set to `id` and a missing key, Laravel prints the raw key — staff saw `validation.required` and `pagination.previous` in production. Add new strings to `lang/id/`; anything missing degrades to readable English.
+`APP_LOCALE=id`, `APP_FALLBACK_LOCALE=en`. The fallback is deliberately _not_ `id`: with both set to `id` and a missing key, Laravel prints the raw key — staff saw `validation.required` and `pagination.previous` in production. Add new strings to `lang/id/`; anything missing degrades to readable English.
 
 ## Templates (`template/`)
 

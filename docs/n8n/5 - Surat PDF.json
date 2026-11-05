@@ -1,0 +1,204 @@
+{
+  "name": "5 - Surat PDF",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "surat-pdf",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://sapa.smkn1amuntai.sch.id"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -416,
+        96
+      ],
+      "id": "95aed58f-ee0e-4149-8191-c237ec36b3f6",
+      "name": "Webhook",
+      "webhookId": "9f288eb6-65f7-471a-873d-ebf7b2d5559e"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5e2ee95b-6540-4256-aec6-1343d00c1226",
+              "leftValue": "={{ $json.headers['x-dashboard-secret'] }}",
+              "rightValue": "Smkn1amuntaikompak",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -208,
+        96
+      ],
+      "id": "96ebbb96-e1f5-4ceb-bf16-cb1cffe20360",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "401",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        192
+      ],
+      "id": "3999173d-68f3-47c8-b3c9-17e39c832730",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://ozeoduelusoeowslgzhk.supabase.co/storage/v1/object/sign/surat/ST-{{ $json.query.id }}.pdf",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"expiresIn\": 60 }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0a22ed45-6767-47dd-9b43-cc2ab922165b",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "OjzTp2n4B7XaRsSp",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c3048f88-54f0-4ec9-b09e-598e92f5a500",
+              "name": "url",
+              "value": "={{ 'https://ozeoduelusoeowslgzhk.supabase.co/storage/v1' + $json.signedURL }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        208,
+        0
+      ],
+      "id": "3ae609c8-329b-46dc-b2cc-3d376b83f5d1",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"url\": $json.url } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        0
+      ],
+      "id": "b40b1ccc-2618-466a-8265-c4ffa155d7cc",
+      "name": "Respond to Webhook1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "92f9f946-3f02-434e-bebe-1a8d575d8db2",
+  "meta": {
+    "instanceId": "43c96b39764730a7964ffd98009f1a5bd1af5b0e9f69f8847fd80450eec1c0ee"
+  },
+  "nodeGroups": [],
+  "id": "l2KJWunrfGshPZDP",
+  "tags": []
+}

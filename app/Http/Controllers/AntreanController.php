@@ -51,11 +51,17 @@ class AntreanController extends Controller
             // Divalidasi di server, bukan hanya di klien seperti
             // index.html:612 yang dapat dilewati begitu saja (E4).
             'nomor' => ['exclude_unless:aksi,setujui', 'required', 'regex:/^\d+$/'],
+
+            // Opsional: untuk backfill surat lama. Kosong = tanggal hari ini
+            // (diputuskan di sisi n8n Siapkan Data). Format dikunci Y-m-d agar
+            // cocok dengan yang dirakit workflow (new Date(tgl + 'T00:00:00')).
+            'tanggal' => ['exclude_unless:aksi,setujui', 'nullable', 'date_format:Y-m-d'],
         ]);
         // Pesannya ada di lang/id/validation.php agar tidak ada dua tempat
         // yang bisa berbeda bunyi untuk kesalahan yang sama.
 
         $nomor = $data['nomor'] ?? null;
+        $tanggal = $data['tanggal'] ?? null;
 
         // E5: nomor ganda diperingatkan, TIDAK diblokir. Buku agenda fisik
         // adalah otoritasnya; sistem yang menolak akan memaksa staf mencari
@@ -65,19 +71,20 @@ class AntreanController extends Controller
                 'jenis' => $jenis,
                 'id' => $id,
                 'nomor' => $nomor,
+                'tanggal' => $tanggal,   // bawa juga agar tak hilang saat konfirmasi duplikat
                 'pesan' => "Nomor $nomor sepertinya sudah dipakai pada surat lain tahun ini. "
                     . 'Periksa buku agenda. Bila memang benar, lanjutkan.',
             ]);
         }
 
         try {
-            $n8n->putuskan($id, $jenis, $data['aksi'], $nomor);
+            $n8n->putuskan($id, $jenis, $data['aksi'], $nomor, $tanggal);
         } catch (N8nException $e) {
             // E1: tidak ada jejak yang ditulis, surat tetap di antrean.
             return back()->withInput()->withErrors(['antrean' => $e->getMessage()]);
         }
 
-        Aktivitas::catat($data['aksi'], $jenis, $id, array_filter(['nomor' => $nomor]));
+        Aktivitas::catat($data['aksi'], $jenis, $id, array_filter(['nomor' => $nomor, 'tanggal' => $tanggal]));
 
         return redirect()->route('antrean.index')->with('sukses', $data['aksi'] === 'setujui'
             ? "Surat #$id disetujui — sedang diterbitkan."
@@ -106,7 +113,7 @@ class AntreanController extends Controller
     {
         return array_values(array_filter(
             $item,
-            fn ($s) => ($s['jenis'] ?? null) === $jenis && ($s['status'] ?? null) === $status
+            fn($s) => ($s['jenis'] ?? null) === $jenis && ($s['status'] ?? null) === $status
         ));
     }
 
@@ -129,7 +136,7 @@ class AntreanController extends Controller
             'keterangan_aktif|menunggu',
         ];
 
-        return array_values(array_filter($item, fn ($s) => ! in_array(
+        return array_values(array_filter($item, fn($s) => ! in_array(
             ($s['jenis'] ?? '?') . '|' . ($s['status'] ?? '?'),
             $dikenal,
             true

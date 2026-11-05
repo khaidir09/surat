@@ -1,0 +1,711 @@
+{
+  "name": "3 - Keputusan TAS",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "surat-keputusan",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://sapa.smkn1amuntai.sch.id"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1488,
+        784
+      ],
+      "id": "1e12b2c3-d562-4ac3-8fc0-6a5f9a734d77",
+      "name": "Webhook",
+      "webhookId": "c43c2b73-924a-4804-acec-39ac1984d268"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d55431c8-eefe-40ee-9b4d-6cb39a43f198",
+              "leftValue": "={{ $json.headers['x-dashboard-secret'] }}",
+              "rightValue": "Smkn1amuntaikompak",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1280,
+        784
+      ],
+      "id": "7bbd5432-caac-4cdb-bfbd-207a37d7cc49",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "401",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -768,
+        880
+      ],
+      "id": "77574694-139a-4c0c-bb33-2d3fb35b8048",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3aea3527-38af-42b8-bd62-2587367c85c2",
+              "leftValue": "={{ !!$json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -560,
+        688
+      ],
+      "id": "a7447298-9cd9-4df2-b11e-127a7a7b1132",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"ok\": true, \"catatan\": \"sudah diproses\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -352,
+        784
+      ],
+      "id": "bcf0e260-c96f-427a-8186-a910e2f5d113",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"ok\": true }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -352,
+        592
+      ],
+      "id": "754a95c4-b69e-440a-a49d-bb8d34a2484b",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cee5c1d9-a9b7-4592-a22e-16c603375488",
+              "leftValue": "={{ $json.status === 'ditolak' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -144,
+        592
+      ],
+      "id": "479d3572-2dbf-4ff8-954b-e608e528b799",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.pemohon_wa }}",
+        "text": "={{ 'Mohon maaf, permintaan Surat Tugas #ST-' + $json.id + ' tidak disetujui. Silakan hubungi Tata Usaha untuk informasi lebih lanjut.' }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        64,
+        432
+      ],
+      "id": "756346ae-50a6-4d0e-8954-7a28ccaad86e",
+      "name": "Send a text message",
+      "webhookId": "35629baa-2362-4d5c-bbf8-3f8385310307",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "8lwqHUaHS77igRJ5",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/8lwqHUaHS77igRJ5",
+          "cachedResultName": "4 - Terbitkan PDF"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "surat_tugas_id": "={{ $('Klaim Keputusan').item.json.id }}",
+            "no_surat": "={{ $('Webhook').item.json.body.nomor }}",
+            "tanggal_surat": "={{ $('Webhook').item.json.body.tanggal }}"
+          },
+          "matchingColumns": [
+            "surat_tugas_id"
+          ],
+          "schema": [
+            {
+              "id": "surat_tugas_id",
+              "displayName": "surat_tugas_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "no_surat",
+              "displayName": "no_surat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "tanggal_surat",
+              "displayName": "tanggal_surat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        64,
+        688
+      ],
+      "id": "e7be3a8d-64ee-4d18-8473-afe7cedb1231",
+      "name": "Call '4 - Terbitkan PDF'"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE surat_tugas\nSET status = CASE WHEN $2 = 'setujui' THEN 'disetujui' ELSE 'ditolak' END,\n    approved_by = 'TAS',\n    approved_at = now()\nWHERE id = $1::int AND status = 'menunggu'\nRETURNING id, pemohon_wa, status;",
+        "options": {
+          "queryReplacement": "={{ [ $json.body.id, $json.body.aksi ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -768,
+        688
+      ],
+      "id": "daf877fa-f045-44d0-917e-f55c35016994",
+      "name": "Klaim Keputusan",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8cafc1e9-074c-4401-8400-f8d22f382418",
+              "leftValue": "={{ $json.body.jenis === 'keterangan_aktif' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1056,
+        656
+      ],
+      "id": "20786f10-2038-4a9e-8eb9-4a3ea21a2d29",
+      "name": "jenis keterangan"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE surat_keterangan\nSET status = CASE WHEN $2 = 'setujui' THEN 'diproses' ELSE 'ditolak' END,\n    approved_by = 'TAS', approved_at = now()\nWHERE id = $1::int AND status = 'menunggu'\nRETURNING id, pemohon_wa, status;",
+        "options": {
+          "queryReplacement": "={{ [ $json.body.id, $json.body.aksi ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -832,
+        416
+      ],
+      "id": "c0340ca6-82a3-440a-973e-aa7ee56aee50",
+      "name": "Klaim Keterangan",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3aea3527-38af-42b8-bd62-2587367c85c2",
+              "leftValue": "={{ !!$json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -640,
+        336
+      ],
+      "id": "21ba0d5c-0dd8-40fd-b1a4-4c3aaf00a565",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"ok\": true, \"catatan\": \"sudah diproses\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -416,
+        416
+      ],
+      "id": "338bff1b-4d9c-4be2-b04e-6c07f44e2eca",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"ok\": true }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -416,
+        240
+      ],
+      "id": "1e5cdcfd-0dbc-4ccd-81dd-58889561d5ae",
+      "name": "Respond to Webhook4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cee5c1d9-a9b7-4592-a22e-16c603375488",
+              "leftValue": "={{ $json.status === 'ditolak' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -208,
+        144
+      ],
+      "id": "548f74fa-7050-4427-aa31-4623a7e74ad2",
+      "name": "If4"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.pemohon_wa }}",
+        "text": "={{ 'Mohon maaf, permintaan Surat Keterangan #SK-' + $json.id + ' tidak disetujui. Silakan hubungi Tata Usaha untuk informasi lebih lanjut.' }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9795a7d1-482e-45bf-86a8-de14dc5e367d",
+      "name": "Send a text message1",
+      "webhookId": "35629baa-2362-4d5c-bbf8-3f8385310307",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "i7csj8lNEpeP8Tpt",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/i7csj8lNEpeP8Tpt",
+          "cachedResultName": "7 - Surat Keterangan Siswa"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "surat_keterangan_id": "={{ $('Klaim Keterangan').item.json.id }}",
+            "no_surat": "={{ $('Webhook').item.json.body.nomor }}",
+            "tanggal_surat": "={{ $('Webhook').item.json.body.tanggal }}"
+          },
+          "matchingColumns": [
+            "surat_tugas_id"
+          ],
+          "schema": [
+            {
+              "id": "surat_keterangan_id",
+              "displayName": "surat_keterangan_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "no_surat",
+              "displayName": "no_surat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "tanggal_surat",
+              "displayName": "tanggal_surat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        32,
+        208
+      ],
+      "id": "46a6d2aa-d5b3-4864-97b6-6a8b1b8d35eb",
+      "name": "Call '7 - Surat Keterangan Siswa'"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "jenis keterangan",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook2": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call '4 - Terbitkan PDF'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Klaim Keputusan": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "jenis keterangan": {
+      "main": [
+        [
+          {
+            "node": "Klaim Keterangan",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Klaim Keputusan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Klaim Keterangan": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook4": {
+      "main": [
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call '7 - Surat Keterangan Siswa'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "ee698da6-2525-48c6-9378-1cc7316cc56a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "43c96b39764730a7964ffd98009f1a5bd1af5b0e9f69f8847fd80450eec1c0ee"
+  },
+  "nodeGroups": [],
+  "id": "YgTIsDLP37dmkxQR",
+  "tags": []
+}

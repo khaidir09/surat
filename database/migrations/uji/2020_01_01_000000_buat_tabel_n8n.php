@@ -105,9 +105,33 @@ return new class extends Migration
             $table->text('diperbarui_oleh')->nullable();
         });
 
-        // counter, log_permintaan, dan sesi sengaja tidak dibuat: Laravel
-        // tidak membaca maupun menulisnya (§5.1), jadi menghadirkannya di
-        // sini hanya akan menyiratkan ketergantungan yang tidak ada.
+        // Telemetri chatbot. Ditambahkan 19 Agu 2026 karena halaman statistik
+        // mulai membacanya (K-S12 pada docs/specs/statistik-surat.md); sampai
+        // saat itu berkas ini sengaja tidak memuatnya.
+        //
+        // Satu baris di sini BUKAN satu permintaan, melainkan satu perpindahan
+        // status: di produksi 20 pengajuan meninggalkan 39 baris. Karena itu
+        // Laravel hanya menghitung baris berstatus 'diajukan', dan tes yang
+        // menyisipkan data ke sini harus ikut menirukan bentuk itu — kalau
+        // setiap surat uji hanya diberi satu baris, tesnya akan hijau untuk
+        // hitungan yang di produksi tidak pernah terjadi.
+        //
+        // Struktur mengikuti information_schema produksi, diperiksa langsung:
+        // seluruh kolom selain id nullable, waktu berdefault now(), dan
+        // durasi_proses_detik ada tetapi SELALU NULL — kolom mati yang tetap
+        // dihadirkan supaya tes menemui tabel seburuk aslinya.
+        Schema::create('public.log_permintaan', function (Blueprint $table) {
+            $table->increments('id');
+            $table->timestampTz('waktu')->nullable()->useCurrent();
+            $table->bigInteger('no_wa')->nullable();
+            $table->text('jenis_surat')->nullable();
+            $table->text('status')->nullable();
+            $table->integer('durasi_proses_detik')->nullable();
+        });
+
+        // counter dan sesi tetap sengaja tidak dibuat: Laravel tidak membaca
+        // maupun menulisnya (§5.1), jadi menghadirkannya di sini hanya akan
+        // menyiratkan ketergantungan yang tidak ada.
     }
 
     public function down(): void
@@ -120,6 +144,7 @@ return new class extends Migration
             'siswa',
             'agenda',
             'status_kepsek',
+            'log_permintaan',
         ] as $tabel) {
             Schema::dropIfExists("public.$tabel");
         }
