@@ -1,0 +1,189 @@
+{
+  "name": "2 - Daftar Pending",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "surat-pending",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://sapa.smkn1amuntai.sch.id"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -416,
+        96
+      ],
+      "id": "8cf60c40-ba40-4453-a87d-e680d274ca14",
+      "name": "Webhook",
+      "webhookId": "e98b87c2-0338-4bc6-9332-3f67cebfe92c"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a364177c-385f-42ac-8793-408fbf120491",
+              "leftValue": "={{ $json.headers['x-dashboard-secret'] }}",
+              "rightValue": "Smkn1amuntaikompak",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -208,
+        96
+      ],
+      "id": "adff2760-2a19-4743-bfc5-7552d0b5635d",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "401",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        192
+      ],
+      "id": "207d54f0-acc5-4b96-9159-081bab70284f",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT st.id, 'surat_tugas' AS jenis, st.status, st.created_at,\n       st.kegiatan, st.tempat, st.tanggal_mulai, st.tanggal_selesai,\n       COALESCE(json_agg(json_build_object('nama',p.nama,'jabatan',p.jabatan) ORDER BY p.nama)\n                FILTER (WHERE p.id IS NOT NULL), '[]'::json) AS petugas,\n       NULL::text AS nama_siswa, NULL::text AS kelas_jurusan, NULL::text AS keperluan\nFROM surat_tugas st\nLEFT JOIN surat_tugas_petugas sp ON sp.surat_tugas_id = st.id\nLEFT JOIN pegawai p ON p.id = sp.pegawai_id\nWHERE st.status IN ('menunggu','menunggu_ttd')\nGROUP BY st.id\n\nUNION ALL\n\nSELECT sk.id, 'keterangan_aktif' AS jenis, sk.status, sk.created_at,\n       NULL::text, NULL::text, NULL::date, NULL::date,\n       '[]'::json AS petugas,\n       s.nama, (s.kelas || '/' || s.jurusan), sk.keperluan\nFROM surat_keterangan sk\nJOIN siswa s ON s.id = sk.siswa_id\nWHERE sk.status = 'menunggu'\nORDER BY created_at ASC;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2ab9771f-386c-4fc2-b8f8-a74951e67997",
+      "name": "Execute a SQL query",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all()\n  .map(i => i.json)\n  .filter(r => r && r.id);      // buang item kosong dari Always Output Data\n\nreturn [{ json: { items: rows } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "4c4f4494-363a-4cd9-a7c4-d16b0e3dabd6",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        0
+      ],
+      "id": "bdf85d3f-66b9-4210-8331-b5c48a706e45",
+      "name": "Respond to Webhook1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "b718390d-70a1-40aa-971b-ba3e4db5334e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "43c96b39764730a7964ffd98009f1a5bd1af5b0e9f69f8847fd80450eec1c0ee"
+  },
+  "nodeGroups": [],
+  "id": "qSyMnh62bJUOHxUd",
+  "tags": []
+}

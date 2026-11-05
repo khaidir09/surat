@@ -1,0 +1,2076 @@
+{
+  "name": "1 - Bot Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ece37786-7c57-4e0a-8183-ce182f8d7dce",
+              "name": "chat_id",
+              "value": "={{ $json.message.chat.id }}",
+              "type": "number"
+            },
+            {
+              "id": "17882ea9-3123-4487-a875-b602dea8a66a",
+              "name": "pesan",
+              "value": "={{ ($json.message.text || $json.message.caption || '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "024cebb9-a770-4b77-ab8f-0cd5eec3e4fb",
+              "name": "pesan_kecil",
+              "value": "={{ ($json.message.text || $json.message.caption || '').trim().toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "4fdfc3bd-b45d-4349-9c83-6bb1684c438a",
+              "name": "tipe_pesan",
+              "value": "={{ $json.message.photo ? 'foto' : ($json.message.document ? 'dokumen' : 'teks') }}",
+              "type": "string"
+            },
+            {
+              "id": "b5c07d9b-1a4a-42ea-a9aa-0d10519eb953",
+              "name": "file_id",
+              "value": "={{ $json.message.photo ? $json.message.photo[$json.message.photo.length-1].file_id : ($json.message.document ? $json.message.document.file_id : '') }}",
+              "type": "string"
+            },
+            {
+              "id": "905ff923-a526-45ea-b4b4-e0efd79d67f2",
+              "name": "caption",
+              "value": "={{ ($json.message.caption || '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "5b5dd2ea-1bb6-425d-9bdc-2a67142053ac",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -704,
+        288
+      ],
+      "id": "92c87fae-47b3-4f73-89aa-4c553e0d7f40",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "2332b4bb-ac56-4f26-95e3-ce7e82ef2b1b",
+                    "leftValue": "=={{ $('Edit Fields').item.json.pesan_kecil }}",
+                    "rightValue": "/start",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "start"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "=={{ $('Edit Fields').item.json.pesan_kecil }}",
+                    "rightValue": "batal",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "3ce96d04-6937-4595-92cc-d1675b639fb0"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "batal"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "86531588-1f19-419b-a959-61385069f292",
+                    "leftValue": "={{ $json.stage === 'menunggu_konfirmasi' && $('Edit Fields').item.json.pesan_kecil === 'ya' }}",
+                    "rightValue": false,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "konfirmasi"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "proses"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        416
+      ],
+      "id": "e3fafccf-ac01-4010-ac18-4b0c94cb6e19",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 700,\n  \"system\": {{ JSON.stringify($json.system_prompt) }},\n  \"messages\": [\n    { \"role\": \"user\", \"content\": {{ JSON.stringify($json.pesan_untuk_ai) }} }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1440,
+        816
+      ],
+      "id": "0a26483a-d70a-4899-aaa1-0ac7624c9b98",
+      "name": "HTTP Request",
+      "credentials": {
+        "anthropicApi": {
+          "id": "7CmuVFTEJ6fkDgfI",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0b4b5c87-978d-46ee-9309-8a53dee50171",
+              "leftValue": "={{ $json.field_kurang.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1792,
+        528
+      ],
+      "id": "7fadcf76-66bd-43c5-b79a-11be4e1f015d",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO sesi (chat_id, stage, draft_json, jenis, updated_at)\nVALUES ($1, 'mengumpulkan', $2::jsonb, 'surat_tugas', now())\nON CONFLICT (chat_id) DO UPDATE\n  SET stage = 'mengumpulkan',\n      draft_json = $2::jsonb,\n      jenis='surat_tugas',\n      updated_at = now();",
+        "options": {
+          "queryReplacement": "={{ [ $('Edit Fields').item.json.chat_id, JSON.stringify($json) ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2000,
+        624
+      ],
+      "id": "0670de7b-12f0-4528-98a8-0f7a3b2f9fa9",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -976,
+        288
+      ],
+      "id": "b60f1c4d-076b-442f-9e81-23158285dd8a",
+      "name": "Telegram Trigger",
+      "webhookId": "c107fc26-69b1-499c-98d7-ee2a8ad773bd",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.chat_id }}",
+        "text": "Assalamualaikum, selamat datang di Asisten Layanan Informasi SMKN 1 Amuntai.  Saya dapat membantu Anda: - Mengurus Surat Tugas - Mengurus Surat Keterangan Aktif siswa - Menanyakan keberadaan Kepala Sekolah - Menanyakan jadwal & agenda sekolah  Cukup tulis kebutuhan Anda dalam satu pesan. Contoh: – \"Buatkan surat tugas a.n. Budi Santoso untuk Bimtek di Banjarmasin, 8–9 Juli 2026.\" – \"Surat keterangan aktif untuk siswa Andi kelas XII.\" – \"Apakah Kepala Sekolah ada di sekolah?\" – \"Ada agenda apa minggu ini?\"  Ketik \"batal\" kapan saja untuk membatalkan permintaan yang sedang berjalan.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        192,
+        224
+      ],
+      "id": "45ec094f-ae5f-4608-af35-78342f94d7b7",
+      "name": "Send a text message",
+      "webhookId": "ea1e47de-0ad7-4b22-a83c-6d84c3760f09",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM sesi WHERE chat_id = $1;",
+        "options": {
+          "queryReplacement": "={{ [ $('Edit Fields').item.json.chat_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        368,
+        352
+      ],
+      "id": "89bf5a0b-c725-45e3-afb3-139954b7cc32",
+      "name": "hapus sesi",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.chat_id }}",
+        "text": "Permintaan dibatalkan. Kirim pesan baru kapan saja untuk memulai lagi.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        576,
+        352
+      ],
+      "id": "bd03e13f-e638-4f93-bd71-667a6a0276af",
+      "name": "Kirim Konfirmasi Pembatalan",
+      "webhookId": "0a88e312-cc71-4ec2-8a14-663d06b05d3f",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.chat_id }}",
+        "text": "={{ $('Parse Claude File').isExecuted ? $('Parse Claude File').item.json.pesan_klarifikasi : $('Parse Claude').item.json.pesan_klarifikasi }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2208,
+        624
+      ],
+      "id": "df9545d1-977b-4211-9d20-77d7c90f055c",
+      "name": "Send a text message1",
+      "webhookId": "f38fc020-12ee-46d5-986b-f29a4307413d",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const edit = $('Edit Fields').first().json;      // chat_id, pesan dari normalisasi\nconst sesi = $input.first().json;                // stage, draft_json dari Get sesi\n\n// draft_json bisa berupa objek atau string, amankan keduanya\nlet draft = sesi.draft_json || {};\nif (typeof draft === 'string') {\n  try { draft = JSON.parse(draft); } catch (e) { draft = {}; }\n}\n\nconst hariIni = new Date().toISOString().slice(0, 10);\n\nconst systemPrompt = `Anda asisten administrasi sekolah yang mengekstrak data\npermintaan Surat Tugas dari chat. Keluarkan HANYA objek JSON\n(tanpa teks lain, tanpa pagar kode).\n\nSkema:\n{\"nama_petugas\":[string],\"kegiatan\":string|null,\"tempat\":string|null, \"pembebanan_biaya\":string|null,\n \"tanggal_mulai\":\"YYYY-MM-DD\"|null,\"tanggal_selesai\":\"YYYY-MM-DD\"|null,\n \"dasar\":string|null,\"field_kurang\":[string],\"pesan_klarifikasi\":string|null}\n\nAturan:\n- Field wajib: nama_petugas, kegiatan, tempat, tanggal_mulai.\n- GABUNGKAN \"data terkumpul\" dengan info baru dari pesan; jangan hapus yang sudah ada.\n- Jangan menebak NIP atau jabatan (diisi sistem dari database).\n- pembebanan_biaya (sumber dana, mis. \"DIPA\", \"BOS\", \"mandiri\"): ekstrak bila\n  disebutkan di lampiran/pesan; JANGAN masukkan ke field_kurang (opsional).\n- Jika ada data kurang: isi field_kurang dan buat pesan_klarifikasi\n  (Bahasa Indonesia, sopan, singkat).\n- Jika \"8-9 Juli 2026\", isi tanggal_mulai dan tanggal_selesai.\n- Jika ragu pada suatu nilai, pakai null; jangan mengarang.\nTanggal hari ini: ${hariIni}`;\n\nconst pesanUntukAi = `Data terkumpul sejauh ini (JSON):\n${JSON.stringify(draft)}\n\nPesan baru pemohon:\n${edit.pesan}`;\n\nreturn [{ json: {\n  system_prompt: systemPrompt,\n  pesan_untuk_ai: pesanUntukAi,\n  chat_id: edit.chat_id\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        816
+      ],
+      "id": "78cad0bd-fc36-44f7-a5e6-29eb9267e23c",
+      "name": "Bangun Prompt"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\n\n// Ambil semua blok teks dari jawaban Claude, gabungkan\nlet text = Array.isArray(raw.content)\n  ? raw.content.filter(b => b.type === 'text').map(b => b.text).join('\\n')\n  : '';\n\n// Buang pagar kode markdown jika ada\ntext = text.replace(/```json/gi, '').replace(/```/g, '').trim();\n\nlet data;\ntry {\n  data = JSON.parse(text);\n} catch (e) {\n  // Jika gagal parse, jangan hentikan alur — minta pengguna ulangi\n  data = {\n    field_kurang: ['_parse'],\n    pesan_klarifikasi: 'Maaf, boleh ulangi permintaannya dalam satu pesan?'\n  };\n}\n\n// Bawa terus chat_id untuk balasan di node berikutnya\ndata.chat_id = $('Bangun Prompt').first().json.chat_id;\n\nreturn [{ json: data }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1648,
+        816
+      ],
+      "id": "6400f9b6-dd6c-4c3c-b577-3a70fca59a54",
+      "name": "Parse Claude"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT DISTINCT ON (q.nama_input)\n       q.nama_input,\n       p.id, p.nama, p.nip, p.pangkat_golongan, p.jabatan\nFROM unnest($1::text[]) AS q(nama_input)\nLEFT JOIN pegawai p\n  ON p.nama ILIKE '%' || q.nama_input || '%'\nORDER BY q.nama_input, similarity(p.nama, q.nama_input) DESC NULLS LAST;",
+        "options": {
+          "queryReplacement": "={{ [ '{' + (Array.isArray($json.nama_petugas) ? $json.nama_petugas : [$json.nama_petugas]).map(n => '\"' + String(n).replace(/\"/g, '\\\\\"') + '\"').join(',') + '}' ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2000,
+        432
+      ],
+      "id": "0f77d499-8f60-408d-ab42-bc42bd7466be",
+      "name": "cari pegawai",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "62811b38-a275-4f36-912d-44279d8edba0",
+              "leftValue": "={{ $json.semua_ketemu }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2400,
+        432
+      ],
+      "id": "f2075489-5f40-472a-8e67-1b0715ee6e67",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.chat_id }}",
+        "text": "={{ 'Nama berikut tidak ditemukan di data pegawai: ' + $json.tak_ditemukan.join(', ') + '. Mohon kirim ulang dengan nama lengkap yang sesuai data kepegawaian.' }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2608,
+        528
+      ],
+      "id": "460f3049-8ced-45a7-a8e4-90e03ec6a66c",
+      "name": "nama tidak ditemukan",
+      "webhookId": "f4aabd4b-5079-41ee-9256-639c38ba442d",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO sesi (chat_id, stage, draft_json, jenis, updated_at)\nVALUES ($1, 'menunggu_konfirmasi', $2::jsonb, 'surat_tugas', now())\nON CONFLICT (chat_id) DO UPDATE\n  SET stage = 'menunggu_konfirmasi',\n      draft_json = $2::jsonb,\n      jenis = 'surat_tugas',\n      updated_at = now();",
+        "options": {
+          "queryReplacement": "={{ [ $('Edit Fields').item.json.chat_id, JSON.stringify($json) ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2752,
+        352
+      ],
+      "id": "5c65f32f-be22-4bfd-a253-3b3a1c84bd83",
+      "name": " semua ketemu",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.chat_id }}",
+        "text": "={{ 'Mohon periksa data Surat Tugas:\\n\\n' +\n  'Ditugaskan:\\n' + $('Lookup Pegawai Rapikan').item.json.petugas.map(p => '- ' + p.nama + ' (' + p.jabatan + ')').join('\\n') +\n  '\\n\\nKegiatan: ' + $('Lookup Pegawai Rapikan').item.json.kegiatan +\n  '\\nTempat: ' + $('Lookup Pegawai Rapikan').item.json.tempat +\n  '\\nTanggal: ' + $('Lookup Pegawai Rapikan').item.json.tanggal_mulai + ' s.d ' + $('Lookup Pegawai Rapikan').item.json.tanggal_selesai +\n  '\\nPembebanan Biaya: ' + $('Lookup Pegawai Rapikan').item.json.pembebanan_biaya +\n  '\\n\\nBalas YA untuk kirim ke TAS, atau \"batal\" untuk membatalkan.' }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2960,
+        352
+      ],
+      "id": "9700f8d5-74e8-4055-8b64-52ecfd581950",
+      "name": "Send a text message2",
+      "webhookId": "6d854a4b-fa3f-4978-a2a9-b9e1d7d96e1d",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json);   // satu baris per nama diminta\nconst src = $('Parse Claude File').isExecuted\n  ? $('Parse Claude File').first().json\n  : $('Parse Claude').first().json;\n\nconst petugas = [];\nconst takDitemukan = [];\n\nfor (const r of rows) {\n  if (r.id) {\n    petugas.push({\n      pegawai_id: r.id,\n      nama: r.nama,\n      nip: r.nip,\n      pangkat: r.pangkat_golongan,\n      jabatan: r.jabatan\n    });\n  } else {\n    takDitemukan.push(r.nama_input);\n  }\n}\n\nreturn [{ json: {\n  semua_ketemu: takDitemukan.length === 0,\n  petugas,\n  tak_ditemukan: takDitemukan,\n  kegiatan: src.kegiatan,\n  tempat: src.tempat,\n  tanggal_mulai: src.tanggal_mulai,\n  tanggal_selesai: src.tanggal_selesai,\n  dasar: src.dasar,\n  pembebanan_biaya: src.pembebanan_biaya,\n  chat_id: src.chat_id\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2208,
+        432
+      ],
+      "id": "0b5810c2-db8c-4fce-808b-3efe95f5f657",
+      "name": "Lookup Pegawai Rapikan"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sesi = $input.first().json;            // dari Get sesi (via Switch)\nlet d = sesi.draft_json || {};\nif (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { d = {}; } }\n\nconst chat_id = $('Edit Fields').first().json.chat_id;\n\nreturn [{ json: {\n  chat_id,\n  kegiatan: d.kegiatan,\n  tempat: d.tempat,\n  tanggal_mulai: d.tanggal_mulai,\n  tanggal_selesai: d.tanggal_selesai,\n  dasar: d.dasar || null,\n  pembebanan_biaya: d.pembebanan_biaya || '-',\n  petugas_ids: (d.petugas || []).map(p => ({ pegawai_id: p.pegawai_id }))\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        736,
+        528
+      ],
+      "id": "a30cc3d3-e16b-46ac-9674-7800cdd2594b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.chat_id }}",
+        "text": "={{ 'Permintaan #ST-' + $json.id + ' sudah diteruskan ke Tata Usaha untuk diverifikasi. Mohon menunggu kabar selanjutnya.' }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1152,
+        528
+      ],
+      "id": "adc75b36-2da6-4e5b-bf27-04de89532852",
+      "name": "beri tahu pemohon",
+      "webhookId": "267d9d1f-f83f-401f-9906-4e1ebeca7a94",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH st AS (\n  INSERT INTO surat_tugas\n    (kegiatan, tempat, tanggal_mulai, tanggal_selesai, dasar, pembebanan_biaya, pemohon_wa, status, created_at)\n  VALUES ($1, $2, $3::date, COALESCE($4::date, $3::date), $5, $6, $7::int8, 'menunggu', now())\n  RETURNING id\n),\nsp AS (\n  INSERT INTO surat_tugas_petugas (surat_tugas_id, pegawai_id)\n  SELECT st.id, x.pegawai_id\n  FROM st, jsonb_to_recordset($8::jsonb) AS x(pegawai_id int)\n),\nlg AS (\n  INSERT INTO log_permintaan (waktu, no_wa, jenis_surat, status)\n  SELECT now(), $7::int8, 'surat_tugas', 'diajukan'\n),\nrs AS (\n  UPDATE sesi SET stage = NULL, draft_json = NULL, jenis = NULL, updated_at = now()\n  WHERE chat_id = $7::int8\n)\nSELECT id FROM st;",
+        "options": {
+          "queryReplacement": "={{ [ $json.kegiatan, $json.tempat, $json.tanggal_mulai, $json.tanggal_selesai, $json.dasar, ($json.pembebanan_biaya || '-'), $json.chat_id, JSON.stringify($json.petugas_ids) ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        944,
+        528
+      ],
+      "id": "1a10ac2a-ce3d-42ac-86e9-02dee63809c8",
+      "name": "simpan surat + petugas + log + reset sesi",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3db47f59-7cda-407c-8083-4f29fe8fb57c",
+              "leftValue": "={{ $('Edit Fields').item.json.tipe_pesan !== 'teks' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -208,
+        288
+      ],
+      "id": "0de4a283-1d68-4624-8491-778d3dc3e7ad",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $('Edit Fields').item.json.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ceec9e8f-9f10-4e36-918f-16885b859aac",
+      "name": "Get a file",
+      "webhookId": "c6c29132-8ffd-4897-abcb-2d92f24475b1",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\n\n// Ambil semua blok teks dari jawaban Claude, gabungkan\nlet text = Array.isArray(raw.content)\n  ? raw.content.filter(b => b.type === 'text').map(b => b.text).join('\\n')\n  : '';\n\n// Buang pagar kode markdown jika ada\ntext = text.replace(/```json/gi, '').replace(/```/g, '').trim();\n\nlet data;\ntry {\n  const m = text.match(/\\{[\\s\\S]*\\}/);\n  if (m) text = m[0];\n  data = JSON.parse(text);\n} catch (e) {\n  // Jika gagal parse, jangan hentikan alur — minta pengguna ulangi\n  data = {\n    field_kurang: ['_parse'],\n    pesan_klarifikasi: 'Maaf, boleh ulangi permintaannya dalam satu pesan?'\n  };\n}\n\n// Bawa terus chat_id untuk balasan di node berikutnya\ndata.chat_id = $('HTTP Request1').first().json.chat_id;\n\nreturn [{ json: data }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        0
+      ],
+      "id": "6fc29673-d68f-4fe9-8303-d7d9fc7118fb",
+      "name": "Parse Claude File"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT s.stage, s.draft_json, s.jenis\nFROM (SELECT $1::int8 AS chat_id) AS q\nLEFT JOIN sesi s ON s.chat_id = q.chat_id;",
+        "options": {
+          "queryReplacement": "={{ $json.chat_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -448,
+        288
+      ],
+      "id": "0ebd2bac-ea10-4779-aa09-27099110bb56",
+      "name": "Get sesi",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "b30eaecf-154e-4ec4-bea4-8b265ad62552",
+      "name": "HTTP Request1",
+      "credentials": {
+        "anthropicApi": {
+          "id": "7CmuVFTEJ6fkDgfI",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const edit = $('Edit Fields').first().json;\nconst sesiRow = $('Get sesi').first().json;\nlet draft = sesiRow.draft_json || {};\nif (typeof draft === 'string') { try { draft = JSON.parse(draft); } catch (e) { draft = {}; } }\n\n// Ambil binary secara aman (tahan untuk mode 'separate')\nconst binMeta = $input.first().binary.data;\nconst buffer = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst b64 = buffer.toString('base64');\nconst mime = binMeta.mimeType || 'image/jpeg';\n\nconst isPdf = mime === 'application/pdf';\nconst blokFile = isPdf\n  ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } }\n  : { type: 'image',    source: { type: 'base64', media_type: mime, data: b64 } };\n\nconst hariIni = new Date().toISOString().slice(0, 10);\n\nconst system = `Anda asisten administrasi sekolah. Dari lampiran surat undangan,\nekstrak data untuk Surat Tugas. Keluarkan HANYA objek JSON, tanpa teks lain.\n\nSkema:\n{\"nama_petugas\":[string],\"kegiatan\":string|null,\"tempat\":string|null,\n \"tanggal_mulai\":\"YYYY-MM-DD\"|null,\"tanggal_selesai\":\"YYYY-MM-DD\"|null,\n \"dasar\":string|null, \"pembebanan_biaya\":string|null, \"field_kurang\":[string],\"pesan_klarifikasi\":string|null}\n\nAturan:\n- kegiatan, tempat, tanggal, dan dasar (nomor undangan) diambil DARI LAMPIRAN.\n- nama_petugas diambil dari \"Keterangan pengirim\" atau \"Data terkumpul\", BUKAN dari\n  daftar undangan di lampiran (sekolah yang menentukan siapa ditugaskan).\n- pembebanan_biaya (sumber dana, mis. \"DIPA\", \"BOS\", \"mandiri\"): ekstrak bila\n  disebutkan di lampiran/pesan; JANGAN masukkan ke field_kurang (opsional).\n- Field wajib: nama_petugas, kegiatan, tempat, tanggal_mulai.\n- Gabungkan dengan data terkumpul; jika ada yang kurang isi field_kurang +\n  pesan_klarifikasi (Bahasa Indonesia, sopan, singkat). Jika ragu, null.\nTanggal hari ini: ${hariIni}`;\n\nconst teks = `Data terkumpul (JSON): ${JSON.stringify(draft)}\nKeterangan pengirim: ${edit.caption || '(tidak ada)'}`;\n\nreturn [{ json: {\n  body: {\n    model: 'claude-sonnet-5',\n    max_tokens: 800,\n    system,\n    thinking: { type: 'disabled' },\n    messages: [ { role: 'user', content: [ blokFile, { type: 'text', text: teks } ] } ],\n  },\n  chat_id: edit.chat_id\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "82430be4-fad2-45f0-868e-cb09375bf858",
+      "name": "Bangun Payload"
+    },
+    {
+      "parameters": {
+        "jsCode": "const edit = $('Edit Fields').first().json;\nconst sesi = $('Get sesi').first().json;\nconst hariIni = new Date().toISOString().slice(0,10);\nlet draft = sesi.draft_json || {};\nif (typeof draft === 'string') { try { draft = JSON.parse(draft); } catch(e){ draft = {}; } }\n\nconst system = `Anda mengklasifikasikan maksud pesan warga sekolah kepada asisten layanan\ninformasi. Tentukan jenis maksudnya. Keluarkan HANYA JSON:\n{\"jenis\":\"surat_tugas\"|\"keterangan_aktif\"|\"tanya_status_kepsek\"|\"tanya_jadwal\"|\"belum_jelas\",\"pesan_tanya\":string|null,\"periode_mulai\":\"YYYY-MM-DD\"|null,\"periode_selesai\":\"YYYY-MM-DD\"|null,\"kata_kunci\":string|null}\n\nPanduan:\n- surat_tugas: menugaskan guru/pegawai ke kegiatan, diklat, bimtek, lomba, dsb.\n- keterangan_aktif: menerangkan seorang SISWA masih aktif belajar (untuk beasiswa,\n  syarat administrasi, dsb).\n- tanya_status_kepsek: menanyakan keberadaan/status Kepala Sekolah (ada di sekolah,\n  sedang di mana, kapan kembali).\n- tanya_jadwal: menanyakan agenda/jadwal/kegiatan/libur sekolah pada suatu waktu\n  (hari ini, minggu ini, bulan tertentu, kapan libur, kapan ujian, dsb).\n- Jika jenis=tanya_jadwal, tentukan periode_mulai & periode_selesai dari maksud\n  pengguna. \"hari ini\"=tanggal hari ini; \"minggu ini\"=Senin–Minggu pekan ini;\n  \"bulan ini\"/\"Desember\"=rentang bulan itu. Jika tak disebut periode, pakai 30 hari\n  ke depan dari hari ini.\nTanggal hari ini: ${hariIni}\n- Untuk pertanyaan \"KAPAN peristiwa tertentu\" (mis. \"kapan libur semester\",\n  \"kapan ujian\", \"kapan MPLS\"), isi kata_kunci dengan inti peristiwanya\n  (mis. \"libur semester\", \"asesmen\", \"MPLS\"), dan biarkan periode kosong.\n- Untuk pertanyaan periode (\"minggu ini\", \"bulan Desember\"), isi periode_mulai\n  & periode_selesai, dan biarkan kata_kunci kosong.\n- Jika belum_jelas: tidak cocok ke mana pun; buat pesan_tanya yang ramah menanyakan\n  pengguna ingin dibantu apa (sebutkan layanan yang tersedia secara natural).`;\n\nreturn [{ json: {\n  system_prompt: system,\n  pesan_untuk_ai: `Pesan pengguna: ${edit.pesan}\\nData terkumpul: ${JSON.stringify(draft)}`,\n  chat_id: edit.chat_id\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        1040
+      ],
+      "id": "11c16e02-7959-46bd-b329-14ca40285ec3",
+      "name": "bangun prompt klasifikasi"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 200,\n  \"system\": {{ JSON.stringify($json.system_prompt) }},\n  \"messages\": [\n    { \"role\": \"user\", \"content\": {{ JSON.stringify($json.pesan_untuk_ai) }} }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        704,
+        1040
+      ],
+      "id": "cdc6f2d6-d91b-48c3-8970-f3b0cc2f7efb",
+      "name": "HTTP Request2",
+      "credentials": {
+        "anthropicApi": {
+          "id": "7CmuVFTEJ6fkDgfI",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet text = Array.isArray(raw.content)\n  ? raw.content.filter(b=>b.type==='text').map(b=>b.text).join('\\n') : '';\ntext = text.replace(/```json/gi,'').replace(/```/g,'').trim();\n\nconst SAPAAN = 'Assalamualaikum! Saya Asisten Layanan Informasi SMKN 1 Amuntai. Saya bisa bantu: mengurus Surat Tugas, Surat Keterangan Aktif siswa, menanyakan keberadaan Kepala Sekolah, atau jadwal & agenda sekolah. Ada yang bisa dibantu?';\n\nlet data;\ntry {\n  data = JSON.parse(text);\n  // Bila AI menilai belum jelas tapi tak memberi pesan, pakai sapaan default\n  if (data.jenis === 'belum_jelas' && !data.pesan_tanya) {\n    data.pesan_tanya = SAPAAN;\n  }\n} catch(e){\n  data = { jenis:'belum_jelas', pesan_tanya: SAPAAN };\n}\ndata.chat_id = $('bangun prompt klasifikasi').first().json.chat_id;\nreturn [{ json: data }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        1040
+      ],
+      "id": "7cd849ab-6ce9-4128-b38e-79882ca7915c",
+      "name": "parse klasifikasi"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "11e60981-4f56-4d0a-8102-12cc41ed1817",
+              "leftValue": "={{ !!$json.jenis }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        256,
+        752
+      ],
+      "id": "330e0289-bdb7-447c-91d4-0a313943e3c9",
+      "name": "jenis sudah diketahui?"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "088aabd5-b00b-42e1-8400-b1c02148f525",
+                    "leftValue": "={{ $json.jenis === 'surat_tugas' }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "tugas"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c1486a99-cb7f-46ae-9787-926664dcb06d",
+                    "leftValue": "={{ $json.jenis === 'keterangan_aktif' }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "keterangan"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "53982c85-17af-44d9-97eb-92b2112f3c51",
+                    "leftValue": "={{ $json.jenis === 'tanya_status_kepsek' }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "status_kepsek"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "9dbb9d47-ae93-4fb1-97eb-cef299c06876",
+                    "leftValue": "={{ $json.jenis === 'tanya_jadwal' }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "jadwal"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "tanya"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1088,
+        976
+      ],
+      "id": "1583e11b-5c46-4f7a-a9d7-4926f7d2511b",
+      "name": "jenis"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO sesi (chat_id, stage, updated_at) VALUES ($1, 'mengumpulkan', now())\nON CONFLICT (chat_id) DO UPDATE SET updated_at = now();",
+        "options": {
+          "queryReplacement": "={{ [ $('Edit Fields').item.json.chat_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1328,
+        1664
+      ],
+      "id": "1c28402a-656a-430c-92b1-a29411ef0b8c",
+      "name": "tanya",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.chat_id }}",
+        "text": "={{ $('parse klasifikasi').item.json.pesan_tanya }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1520,
+        1664
+      ],
+      "id": "b2849dd6-bf0a-46de-959a-066152714d3d",
+      "name": "kirim tanya",
+      "webhookId": "267d9d1f-f83f-401f-9906-4e1ebeca7a94",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 500,\n  \"system\": {{ JSON.stringify($json.system_prompt) }},\n  \"messages\": [ { \"role\": \"user\", \"content\": {{ JSON.stringify($json.pesan_untuk_ai) }} } ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1616,
+        1008
+      ],
+      "id": "6df2d929-dea4-4d29-9f4a-1916b7a96b16",
+      "name": "HTTP Request3",
+      "credentials": {
+        "anthropicApi": {
+          "id": "7CmuVFTEJ6fkDgfI",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet text = Array.isArray(raw.content) ? raw.content.filter(b=>b.type==='text').map(b=>b.text).join('\\n') : '';\ntext = text.replace(/```json/gi,'').replace(/```/g,'').trim();\nlet data;\ntry { data = JSON.parse(text); }\ncatch(e){ data = { field_kurang:['_parse'], pesan_klarifikasi:'Maaf, boleh ulangi permintaannya?' }; }\ndata.chat_id = $('Bangun Prompt Siswa').first().json.chat_id;\nreturn [{ json: data }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        1008
+      ],
+      "id": "a8aa1723-3075-4d17-9b5a-e3515bc42e59",
+      "name": "Parse Claude Siswa"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ef05b8a0-45d7-4626-83c2-5ad9a732954d",
+              "leftValue": "={{ ($json.field_kurang || []).length === 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2032,
+        1008
+      ],
+      "id": "a5b160ab-bbe8-4b07-8a32-955ee6fb5f4c",
+      "name": "if field_kurang (siswa)"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO sesi (chat_id, stage, draft_json, jenis, updated_at)\nVALUES ($1, 'mengumpulkan', $2::jsonb, 'keterangan_aktif', now())\nON CONFLICT (chat_id) DO UPDATE\n  SET stage='mengumpulkan', draft_json=$2::jsonb, jenis='keterangan_aktif', updated_at=now();",
+        "options": {
+          "queryReplacement": "={{ [ $('Edit Fields').item.json.chat_id, JSON.stringify($json) ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        2240,
+        1104
+      ],
+      "id": "f60b961f-78ce-4036-a869-2d128579752a",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.chat_id }}",
+        "text": "={{ $('Parse Claude Siswa').item.json.pesan_klarifikasi }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2432,
+        1104
+      ],
+      "id": "80b0f467-f405-4d92-94b7-f34765018901",
+      "name": "kirim klarifikasi",
+      "webhookId": "f38fc020-12ee-46d5-986b-f29a4307413d",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, nama, tempat_lahir, tanggal_lahir, kelas, jurusan,\n       nis_nisn, nama_orang_tua, alamat, similarity(nama, $1) AS skor\nFROM siswa\nWHERE nama ILIKE '%' || $1 || '%'\nORDER BY skor DESC\nLIMIT 3;",
+        "options": {
+          "queryReplacement": "={{ [ $json.nama_siswa ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        2240,
+        912
+      ],
+      "id": "223a2a95-84e0-4dc0-b0d0-466d724e71c8",
+      "name": "cari siswa",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && r.id);\nconst src = $('Parse Claude Siswa').first().json;\n\nlet siswa = null, pesan = null;\nif (rows.length === 0) {\n  pesan = `Data siswa bernama \"${src.nama_siswa}\" tidak ditemukan. Mohon kirim nama lengkap sesuai data sekolah.`;\n} else if (rows.length > 1 && !src.kelas) {\n  pesan = `Ada lebih dari satu siswa bernama \"${src.nama_siswa}\". Mohon sebutkan kelasnya juga.`;\n} else {\n  siswa = src.kelas\n    ? (rows.find(r => (r.kelas||'').toLowerCase() === (src.kelas||'').toLowerCase()) || rows[0])\n    : rows[0];\n}\n\nreturn [{ json: {\n  ketemu: !!siswa,\n  pesan,\n  siswa,\n  keperluan: src.keperluan || null,\n  chat_id: src.chat_id\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2416,
+        912
+      ],
+      "id": "c7793e24-d853-4bde-86af-70b5ac157649",
+      "name": "Lookup Siswa Rapikan"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "219e7c7d-5384-4f41-9b29-0b41a3ec397a",
+              "leftValue": "={{ $json.ketemu }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2624,
+        912
+      ],
+      "id": "8b32b744-2ac3-46e2-9625-aaba1f39739e",
+      "name": "if ketemu data siswa"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.chat_id }}",
+        "text": "={{ $('Lookup Siswa Rapikan').item.json.pesan }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2880,
+        992
+      ],
+      "id": "64b11d6e-4fd7-4591-b81e-e7b8815daa1b",
+      "name": "siswa tidak ditemukan",
+      "webhookId": "f4aabd4b-5079-41ee-9256-639c38ba442d",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO sesi (chat_id, stage, draft_json, jenis, updated_at)\nVALUES ($1, 'menunggu_konfirmasi', $2::jsonb, 'keterangan_aktif', now())\nON CONFLICT (chat_id) DO UPDATE\n  SET stage='menunggu_konfirmasi', draft_json=$2::jsonb, jenis='keterangan_aktif', updated_at=now();",
+        "options": {
+          "queryReplacement": "={{ [ $('Edit Fields').item.json.chat_id, JSON.stringify($json) ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2880,
+        800
+      ],
+      "id": "6be10fb6-37ba-49da-b445-3e35c3b40d7b",
+      "name": "siswa ketemu",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.chat_id }}",
+        "text": "={{ 'Mohon periksa data Surat Keterangan Aktif:\\n\\n' +\n  'Nama: ' + $('Lookup Siswa Rapikan').item.json.siswa.nama +\n  '\\nKelas/Jurusan: ' + $('Lookup Siswa Rapikan').item.json.siswa.kelas + '/' + $('Lookup Siswa Rapikan').item.json.siswa.jurusan +\n  '\\nNIS/NISN: ' + $('Lookup Siswa Rapikan').item.json.siswa.nis_nisn +\n  '\\n\\nBalas YA untuk kirim ke TAS, atau \"batal\" untuk membatalkan.' }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3072,
+        800
+      ],
+      "id": "a9a4738f-6539-433e-9e91-1448368d33e9",
+      "name": "kirim ringkasan siswa",
+      "webhookId": "6d854a4b-fa3f-4978-a2a9-b9e1d7d96e1d",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const edit = $('Edit Fields').first().json;\nconst sesi = $('Get sesi').first().json;\nlet draft = sesi.draft_json || {};\nif (typeof draft === 'string') { try { draft = JSON.parse(draft); } catch(e){ draft = {}; } }\n\nconst system = `Anda asisten administrasi sekolah yang menyiapkan Surat Keterangan\nAktif Belajar untuk seorang SISWA. Dari pesan pengguna, ekstrak datanya.\nKeluarkan HANYA objek JSON, tanpa teks lain.\n\nSkema:\n{\"nama_siswa\":string|null,\"kelas\":string|null,\"keperluan\":string|null,\n \"field_kurang\":[string],\"pesan_klarifikasi\":string|null}\n\nAturan:\n- Field wajib: nama_siswa. (kelas & keperluan opsional — JANGAN masukkan ke field_kurang)\n- kelas hanya untuk membedakan bila ada nama sama; ekstrak bila disebut.\n- Jangan menebak NISN/tanggal lahir/alamat — diambil sistem dari database siswa.\n- GABUNGKAN dengan data terkumpul; jangan hapus yang sudah ada.\n- Jika nama_siswa belum ada, isi field_kurang + pesan_klarifikasi (sopan, singkat).`;\n\nreturn [{ json: {\n  system_prompt: system,\n  pesan_untuk_ai: `Pesan pengguna: ${edit.pesan}\\nData terkumpul: ${JSON.stringify(draft)}`,\n  chat_id: edit.chat_id\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1392,
+        1008
+      ],
+      "id": "3fb0e68d-4c0a-4422-9ddb-83f240af08e9",
+      "name": "Bangun Prompt Siswa"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d9ed3d0d-1749-4ff4-ab5d-813d4893bb45",
+              "leftValue": "={{ $json.jenis === 'keterangan_aktif' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        368,
+        560
+      ],
+      "id": "bbc66630-a075-43fd-8af8-49137082f54b",
+      "name": "jenis surat"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sesi = $input.first().json;             // dari Get sesi (via Switch)\nlet d = sesi.draft_json || {};\nif (typeof d === 'string') { try { d = JSON.parse(d); } catch(e){ d = {}; } }\n\nconst chat_id = $('Edit Fields').first().json.chat_id;\n\nreturn [{ json: {\n  chat_id,\n  siswa_id: d.siswa ? d.siswa.id : null,\n  keperluan: d.keperluan || null\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        656
+      ],
+      "id": "1fdc0e17-c9cb-4264-b2bf-c28df494142c",
+      "name": "siapkan data keterangan"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.chat_id }}",
+        "text": "={{ 'Permintaan Surat Keterangan Aktif #SK-' + $json.id + ' sudah diteruskan ke Tata Usaha untuk diproses. Pian akan diberi tahu setelah surat terbit.' }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1008,
+        736
+      ],
+      "id": "e6bde4ce-b6c0-4a4a-83d2-95999baf4eb7",
+      "name": "beri tahu pemohon siswa",
+      "webhookId": "267d9d1f-f83f-401f-9906-4e1ebeca7a94",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH sk AS (\n  INSERT INTO surat_keterangan\n    (siswa_id, keperluan, pemohon_wa, status, created_at)\n  VALUES ($1::int, $2, $3::int8, 'menunggu', now())\n  RETURNING id\n),\nlg AS (\n  INSERT INTO log_permintaan (waktu, no_wa, jenis_surat, status)\n  SELECT now(), $3::int8, 'keterangan_aktif', 'diajukan'\n),\nrs AS (\n  UPDATE sesi SET stage = NULL, draft_json = NULL, jenis = NULL, updated_at = now()\n  WHERE chat_id = $3::int8\n)\nSELECT id FROM sk;",
+        "options": {
+          "queryReplacement": "={{ [ $json.siswa_id, $json.keperluan, $json.chat_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        800,
+        736
+      ],
+      "id": "cf3f693c-a6bc-4188-83f4-f40d07ae846d",
+      "name": "simpan surat keterangan + log + reset sesi",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT status, keterangan, estimasi_kembali,\n       EXTRACT(EPOCH FROM (now() - diperbarui_pada))::int AS detik_lalu\nFROM status_kepsek WHERE id = 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1408,
+        1216
+      ],
+      "id": "81d47428-3f9f-43a4-b9f2-e7893b6b94d5",
+      "name": "baca status",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.chat_id }}",
+        "text": "={{ (() => {\n  const s = $json;\n  const menit = Math.round((s.detik_lalu || 0) / 60);\n  const lalu = menit < 1 ? 'baru saja' : menit < 60 ? menit + ' menit lalu'\n    : Math.round(menit/60) + ' jam lalu';\n  let t = 'Saat ini Kepala Sekolah: ' + s.status + '.';\n  if (s.estimasi_kembali) t += ' Perkiraan kembali pukul ' + s.estimasi_kembali + '.';\n  if (s.keterangan) t += ' (' + s.keterangan + ')';\n  t += '\\n\\nDiperbarui ' + lalu + '.';\n  return t;\n})() }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1616,
+        1216
+      ],
+      "id": "93b7991f-e89a-40f5-807e-347f2413af39",
+      "name": "susun & kirim jawaban",
+      "webhookId": "e6b25769-96fd-4d33-9a1d-649d3603d5f2",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT tanggal_mulai, tanggal_selesai, judul, kategori\nFROM agenda\nWHERE (\n  ($3 = '' AND tanggal_mulai <= $2::date AND tanggal_selesai >= $1::date)\n  OR\n  ($3 <> '' AND judul ILIKE '%' || $3 || '%' AND tanggal_selesai >= CURRENT_DATE)\n)\nORDER BY tanggal_mulai ASC\nLIMIT 20;",
+        "options": {
+          "queryReplacement": "={{ [ $json.periode_mulai || new Date().toISOString().slice(0,10), $json.periode_selesai || new Date(Date.now()+30*86400000).toISOString().slice(0,10), $json.kata_kunci || '' ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1408,
+        1424
+      ],
+      "id": "9466817e-887e-4f7c-bfb9-2c05f1007544",
+      "name": "baca agenda",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Edit Fields').item.json.chat_id }}",
+        "text": "={{ (() => {\n  const rows = $input.all().map(i => i.json).filter(r => r && r.judul);\n  if (!rows.length) return 'Tidak ada agenda terjadwal pada periode tersebut.';\n  const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];\n  const fmt = s => { const d = new Date(s); return d.getDate() + ' ' + bulan[d.getMonth()]; };\n  const baris = rows.map(r => {\n    const tgl = r.tanggal_mulai === r.tanggal_selesai ? fmt(r.tanggal_mulai)\n      : fmt(r.tanggal_mulai) + '–' + fmt(r.tanggal_selesai);\n    return '• ' + tgl + ': ' + r.judul;\n  }).join('\\n');\n  return 'Agenda sekolah:\\n\\n' + baris;\n})() }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1616,
+        1424
+      ],
+      "id": "210761fb-11db-4ac2-ba6e-14bb721ac4c1",
+      "name": "susun & kirim jawaban jadwal",
+      "webhookId": "e6b25769-96fd-4d33-9a1d-649d3603d5f2",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO log_permintaan (waktu, no_wa, jenis_surat, status)\nVALUES (now(), $1::int8, 'tanya_status_kepsek', 'dijawab');",
+        "options": {
+          "queryReplacement": "={{ [ $('Edit Fields').item.json.chat_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1824,
+        1216
+      ],
+      "id": "b7252897-514b-48e1-8099-45581c26af5b",
+      "name": "simpan log status kepsek",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO log_permintaan (waktu, no_wa, jenis_surat, status)\nVALUES (now(), $1::int8, 'tanya_jadwal', 'dijawab');",
+        "options": {
+          "queryReplacement": "={{ [ $('Edit Fields').item.json.chat_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1824,
+        1424
+      ],
+      "id": "fb1b970a-aeb2-463b-8a23-6a0cc0dd69e5",
+      "name": "simpan log agenda",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get sesi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "hapus sesi",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "jenis surat",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "jenis sudah diketahui?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Parse Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "cari pegawai",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "hapus sesi": {
+      "main": [
+        [
+          {
+            "node": "Kirim Konfirmasi Pembatalan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bangun Prompt": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Claude": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cari pegawai": {
+      "main": [
+        [
+          {
+            "node": "Lookup Pegawai Rapikan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": " semua ketemu",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "nama tidak ditemukan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " semua ketemu": {
+      "main": [
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Pegawai Rapikan": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "simpan surat + petugas + log + reset sesi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "simpan surat + petugas + log + reset sesi": {
+      "main": [
+        [
+          {
+            "node": "beri tahu pemohon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Bangun Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Claude File": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get sesi": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Parse Claude File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bangun Payload": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "bangun prompt klasifikasi": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "parse klasifikasi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "jenis sudah diketahui?": {
+      "main": [
+        [
+          {
+            "node": "jenis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "bangun prompt klasifikasi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "parse klasifikasi": {
+      "main": [
+        [
+          {
+            "node": "jenis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "jenis": {
+      "main": [
+        [
+          {
+            "node": "Bangun Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Bangun Prompt Siswa",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "baca status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "baca agenda",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "tanya",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tanya": {
+      "main": [
+        [
+          {
+            "node": "kirim tanya",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Parse Claude Siswa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Claude Siswa": {
+      "main": [
+        [
+          {
+            "node": "if field_kurang (siswa)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if field_kurang (siswa)": {
+      "main": [
+        [
+          {
+            "node": "cari siswa",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "kirim klarifikasi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cari siswa": {
+      "main": [
+        [
+          {
+            "node": "Lookup Siswa Rapikan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Siswa Rapikan": {
+      "main": [
+        [
+          {
+            "node": "if ketemu data siswa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if ketemu data siswa": {
+      "main": [
+        [
+          {
+            "node": "siswa ketemu",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "siswa tidak ditemukan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "siswa ketemu": {
+      "main": [
+        [
+          {
+            "node": "kirim ringkasan siswa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bangun Prompt Siswa": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "jenis surat": {
+      "main": [
+        [
+          {
+            "node": "siapkan data keterangan",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "siapkan data keterangan": {
+      "main": [
+        [
+          {
+            "node": "simpan surat keterangan + log + reset sesi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "simpan surat keterangan + log + reset sesi": {
+      "main": [
+        [
+          {
+            "node": "beri tahu pemohon siswa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "baca status": {
+      "main": [
+        [
+          {
+            "node": "susun & kirim jawaban",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "baca agenda": {
+      "main": [
+        [
+          {
+            "node": "susun & kirim jawaban jadwal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "susun & kirim jawaban": {
+      "main": [
+        [
+          {
+            "node": "simpan log status kepsek",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "susun & kirim jawaban jadwal": {
+      "main": [
+        [
+          {
+            "node": "simpan log agenda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "6fc43f53-4957-4443-8ab0-f8f9018d2d4e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "43c96b39764730a7964ffd98009f1a5bd1af5b0e9f69f8847fd80450eec1c0ee"
+  },
+  "nodeGroups": [],
+  "id": "9feKLhn9bjo6n0yi",
+  "tags": []
+}

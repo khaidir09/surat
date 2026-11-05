@@ -1,0 +1,360 @@
+{
+  "name": "4 - Terbitkan PDF",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "surat_tugas_id",
+              "type": "number"
+            },
+            {
+              "name": "no_surat"
+            },
+            {
+              "name": "tanggal_surat"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1651a15b-efe8-4546-a5c5-fee12b3aebe4",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT s.*,\n  json_agg(json_build_object(\n    'nama', p.nama, 'nip', p.nip,\n    'pangkat_golongan', p.pangkat_golongan, 'jabatan', p.jabatan\n  ) ORDER BY p.nama) AS petugas\nFROM surat_tugas s\nJOIN surat_tugas_petugas sp ON sp.surat_tugas_id = s.id\nJOIN pegawai p              ON p.id = sp.pegawai_id\nWHERE s.id = $1::int\nGROUP BY s.id;",
+        "options": {
+          "queryReplacement": "={{ [ $json.surat_tugas_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        272,
+        0
+      ],
+      "id": "123a897b-65dc-44bc-9c31-83bc24468175",
+      "name": "Ambil Detail",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://sapa.smkn1amuntai.sch.id/template/surat_tugas_template.html",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "html"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        832,
+        0
+      ],
+      "id": "a6c11d87-f12d-4ea1-9057-573c782f44c7",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Siapkan Data').first().json;\nlet tpl = $input.first().json.html;\n\nconst m = tpl.match(/{{#each petugas}}([\\s\\S]*?){{\\/each}}/);\nlet rows = '';\nfor (const p of data.petugas) {\n  let r = m[1];\n  for (const k of Object.keys(p)) r = r.split('{{' + k + '}}').join(p[k] ?? '');\n  rows += r;\n}\ntpl = tpl.replace(m[0], rows);\n\nfor (const k of Object.keys(data)) {\n  if (k === 'petugas') continue;\n  tpl = tpl.split('{{' + k + '}}').join(data[k] ?? '');\n}\n\nreturn [{\n  json: {},\n  binary: {\n    index_html: {\n      data: Buffer.from(tpl).toString('base64'),\n      mimeType: 'text/html',\n      fileName: 'index.html'\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "56ef50ec-ac94-417b-b7a8-901d7443e944",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://gotenberg:3000/forms/chromium/convert/html",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "index_html"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "f94e88e4-c508-4883-ac59-52e092beaa77",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE surat_tugas\nSET no_surat = $2, status = 'menunggu_ttd', pdf_url = $3\nWHERE id = $1::int AND no_surat IS NULL;",
+        "options": {
+          "queryReplacement": "=={{ [ $('Siapkan Data').item.json.surat_id, $('Siapkan Data').item.json.no_surat, 'ST-' + $('Siapkan Data').item.json.surat_id + '.pdf' ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1664,
+        0
+      ],
+      "id": "60e69526-43c9-4e31-8291-f90ea96b418b",
+      "name": "Execute a SQL query1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $('Ambil Detail').first().json;\n\nconst inputTgl = $('When Executed by Another Workflow').first().json.tanggal_surat;\nconst tglSurat = inputTgl ? new Date(inputTgl + 'T00:00:00') : new Date();\n\nconst mulai   = new Date(s.tanggal_mulai);\nconst selesai = new Date(s.tanggal_selesai || s.tanggal_mulai);\nconst hari    = Math.round((selesai - mulai) / 86400000) + 1;\n\nconst bulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli',\n  'Agustus','September','Oktober','November','Desember'];\nconst fmt = d => `${d.getDate()} ${bulan[d.getMonth()]} ${d.getFullYear()}`;\n\nreturn [{ json: {\n  nama_sekolah: 'SMK NEGERI 1 AMUNTAI',\n  nama_sekolah_singkat: 'SMKN 1 Amuntai',\n  alamat_sekolah: 'Jl. Negara Dipa No.346 Telp / Fax (0527) 61440 Amuntai 71418',\n  email_sekolah: 'smkn1amuntai@gmail.com',\n  jabatan_pemberi: 'Kepala Sekolah Menengah Kejuruan ( SMK ) Negeri 1 Amuntai',\n  wilayah_sekolah: 'Kabupaten Hulu Sungai Utara Provinsi Kalimantan Selatan',\n  nama_kepala: 'Syaprudin, S.Pd',\n  nip_kepala: '19791023 200604 1 006',\n  pangkat_kepala: 'Pembina Tingkat 1/IV-b',\n  kota_surat: 'Hulu Sungai Utara',\n  no_surat: `800.1.11.1/${$('When Executed by Another Workflow').first().json.no_surat}-SMKN.1-AT/${new Date().getFullYear()}`,\n  petugas: s.petugas.map((p, i) => ({\n    no: i + 1, nama: p.nama, nip: p.nip,\n    pangkat: p.pangkat_golongan, jabatan: p.jabatan, ket: ''\n  })),\n  keperluan: s.kegiatan,\n  tempat_tujuan: s.tempat,\n  lama_perjalanan: `${hari} hari`,\n  tanggal_berlaku: mulai.getTime() === selesai.getTime()\n    ? fmt(mulai) : `${mulai.getDate()} s.d ${fmt(selesai)}`,\n  alat_angkutan: 'Angkutan Darat/kendaraan roda empat/roda dua',\n  pembebanan_biaya: s.pembebanan_biaya || '-',\n  tanggal_surat: `${tglSurat.getDate()} ${bulan[tglSurat.getMonth()]} ${tglSurat.getFullYear()}`,\n  surat_id: s.id,\n  pemohon: s.pemohon_wa,\n  created_at: s.created_at\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        544,
+        0
+      ],
+      "id": "46646065-ef5a-43a6-b65e-946f492cdfdf",
+      "name": "Siapkan Data"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO log_permintaan (waktu, no_wa, jenis_surat, status)\nVALUES (now(), $1::int8, 'surat_tugas', 'menunggu_ttd');",
+        "options": {
+          "queryReplacement": "={{ [ $('Siapkan Data').item.json.pemohon ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1872,
+        0
+      ],
+      "id": "36b84a5c-dc64-46c5-b1f0-c95c48a04245",
+      "name": "Execute a SQL query2",
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://ozeoduelusoeowslgzhk.supabase.co/storage/v1/object/surat/ST-{{ $('Siapkan Data').item.json.surat_id }}.pdf",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/pdf"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1456,
+        0
+      ],
+      "id": "1b9d5d09-dd0e-4c30-91fd-ce2eed23cb59",
+      "name": "HTTP Request2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "bdyBxkKjWEH9csnj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Siapkan Data').item.json.pemohon }}",
+        "text": "={{ 'Surat Tugas #ST-' + $('Siapkan Data').item.json.surat_id + ' sudah dicetak dan menunggu tanda tangan Kepala Sekolah. Pian akan diberi tahu saat surat sudah bisa diambil.' }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2160,
+        0
+      ],
+      "id": "cfbc73f1-3784-4b64-aa8c-36df0c38095e",
+      "name": "Send a text message",
+      "webhookId": "ac0cb41f-71f6-4f57-b68a-fbec14d75c09",
+      "credentials": {
+        "telegramApi": {
+          "id": "y6eISVaYZaH55qMi",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Ambil Detail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ambil Detail": {
+      "main": [
+        [
+          {
+            "node": "Siapkan Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Ambil Detail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Siapkan Data": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query1": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query2": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "9e573c05-3980-4a19-8fbe-19be30869f31",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "43c96b39764730a7964ffd98009f1a5bd1af5b0e9f69f8847fd80450eec1c0ee"
+  },
+  "nodeGroups": [],
+  "id": "8lwqHUaHS77igRJ5",
+  "tags": []
+}

@@ -1,0 +1,171 @@
+{
+  "name": "8 - Status Kepala Sekolah",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "status-kepsek",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://sapa.smkn1amuntai.sch.id"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -464,
+        128
+      ],
+      "id": "01ddc68a-3011-44ff-80f2-aa28b0dd7d6e",
+      "name": "Webhook",
+      "webhookId": "1cf29b2b-bcbf-4382-9748-429388c79fe8"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "549c1aac-472e-47ad-a0a8-efb59beb8760",
+              "leftValue": "={{ $json.headers['x-dashboard-secret'] }}",
+              "rightValue": "Smkn1amuntaikompak",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -256,
+        128
+      ],
+      "id": "4e159df2-78bf-4c27-b69e-bb2c7999bdab",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "401",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -48,
+        224
+      ],
+      "id": "df8d33c1-5eb7-4e74-be27-b765c81a5146",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE status_kepsek\nSET status = $1,\n    keterangan = NULLIF($2, ''),\n    estimasi_kembali = NULLIF($3, ''),\n    diperbarui_pada = now(),\n    diperbarui_oleh = 'TAS'\nWHERE id = 1;",
+        "options": {
+          "queryReplacement": "={{ [ $json.body.status, $json.body.keterangan || '', $json.body.estimasi || '' ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        0,
+        0
+      ],
+      "id": "77fa67d6-3510-44c7-96c1-0f30806cde88",
+      "name": "update status",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "s07rEDXvFHZKzoUU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"ok\": true }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        240,
+        0
+      ],
+      "id": "d49462e3-f184-401c-9c01-b97826a4e4ee",
+      "name": "Respond to Webhook2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "update status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "update status": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "500e8c69-20b2-4fc4-b9f5-5d68644cdc83",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "43c96b39764730a7964ffd98009f1a5bd1af5b0e9f69f8847fd80450eec1c0ee"
+  },
+  "nodeGroups": [],
+  "id": "2SKtf5Z5QnFFc6gM",
+  "tags": []
+}
